@@ -1,0 +1,7 @@
+*.o
+*work-*.cf
+*~
+*.pyc
+results.xml
+*.ghw
+sim/ghdl/bench_idcode
