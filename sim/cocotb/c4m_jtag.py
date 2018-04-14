@@ -3,6 +3,9 @@ from cocotb.triggers import Timer
 from cocotb.utils import get_sim_steps
 from cocotb.binary import BinaryValue
 
+class JTAGException(Exception):
+    pass
+
 class JTAG_Clock(object):
     """
     Class for the JTAG clock, run cycle by cycle
