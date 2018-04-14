@@ -84,6 +84,12 @@ class JTAG_Master(object):
 
     @cocotb.coroutine
     def change_state(self, tms_list):
+        """
+        Put TAP in other state by giving a TMS sequence
+        This function does not detect if one ends up in reset or run
+        state afterwards, self.state has to be updated by caller
+        if that is the case.
+        """
         tms_copy = list(tms_list)
         while tms_copy:
             self.tms <= tms_copy.pop()
