@@ -62,7 +62,7 @@ class JTAG_Master(object):
 
     @cocotb.coroutine
     def cycle_clock(self, cycles=1):
-        if self.state == "Run" and self.tms:
+        if self.state == "Run" and self.tms == 1:
             self.state = "Scan"
         yield self.clkgen.Cycle(cycles)
 
