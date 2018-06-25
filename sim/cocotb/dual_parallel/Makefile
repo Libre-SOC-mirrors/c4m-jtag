@@ -1,5 +1,6 @@
-COCOTB=$(HOME)/eda/code/cocotb
-VHDLDIR=$(HOME)/eda/code/c4m_jtag/rtl/vhdl
+PWD=$(realpath .)
+TOPDIR=$(realpath ../../..)
+VHDLDIR=$(TOPDIR)/rtl/vhdl
 VHDL_SOURCES = \
   $(VHDLDIR)/c4m_jtag_pkg.vhdl \
   $(VHDLDIR)/c4m_jtag_tap_fsm.vhdl \
@@ -16,5 +17,7 @@ SIM=ghdl
 GPI_IMPL=vhpi
 SIM_ARGS=--wave=test.ghw
 
-include $(COCOTB)/makefiles/Makefile.inc
-include $(COCOTB)/makefiles/Makefile.sim
+COCOTBDIR=$(shell cocotb-path)
+
+include $(COCOTBDIR)/makefiles/Makefile.inc
+include $(COCOTBDIR)/makefiles/Makefile.sim
