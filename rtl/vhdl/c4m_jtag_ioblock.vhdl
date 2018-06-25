@@ -15,6 +15,7 @@ entity c4m_jtag_ioblock is
     TCK:        in std_logic;
     TDI:        in std_logic;
     TDO:        out std_logic;
+    TDO_EN:     out std_logic := '0';
 
     -- JTAG state
     STATE:      in TAPSTATE_TYPE;
@@ -84,5 +85,7 @@ begin
                 SR_Normal;
 
   TDO <= BDSR_OUT(0) when ISSAMPLECMD and STATE = Shift else
-         'Z';
+         '0';
+  TDO_EN <= '1' when ISSAMPLECMD and STATE = Shift else
+            '0';
 end rtl;

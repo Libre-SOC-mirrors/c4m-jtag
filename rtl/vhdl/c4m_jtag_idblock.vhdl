@@ -18,6 +18,7 @@ entity c4m_jtag_idblock is
     TCK:        in std_logic;
     TDI:        in std_logic;
     TDO:        out std_logic;
+    TDO_EN:     out std_logic := '0';
 
     -- JTAG state
     STATE:      in TAPSTATE_TYPE;
@@ -65,5 +66,7 @@ begin
 
   EN_TDO <= STATE = Shift and DRSTATE = '1' and (IR = CMD_IDCODE or IR = CMD_BYPASS);
   TDO <= SR_ID(0) when EN_TDO else
-         'Z';
+         '0';
+  TDO_EN <= '1' when EN_TDO else
+            '0';
 end rtl;

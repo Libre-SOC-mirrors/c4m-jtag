@@ -52,6 +52,7 @@ package c4m_jtag is
       TCK:      in std_logic;
       TDI:      in std_logic;
       TDO:      out std_logic;
+      TDO_EN:   out std_logic;
     
       -- JTAG state
       STATE:    in TAPSTATE_TYPE;
@@ -76,6 +77,7 @@ package c4m_jtag is
       TCK:      in std_logic;
       TDI:      in std_logic;
       TDO:      out std_logic;
+      TDO_EN:   out std_logic;
 
       -- JTAG state
       STATE:    in TAPSTATE_TYPE;
@@ -120,6 +122,7 @@ package c4m_jtag is
       TCK:      in std_logic;
       TDI:      in std_logic;
       TDO:      out std_logic;
+      TDO_EN:   out std_logic;
 
       -- JTAG state
       STATE:    in TAPSTATE_TYPE;
@@ -154,6 +157,7 @@ package c4m_jtag is
       TMS:      in std_logic;
       TDI:      in std_logic;
       TDO:      out std_logic;
+      TDO_EN:   out std_logic;
       TRST_N:   in std_logic;
 
       -- The FSM state indicators

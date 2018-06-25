@@ -19,6 +19,7 @@ entity c4m_jtag_tap_controller is
     TMS:        in std_logic;
     TDI:        in std_logic;
     TDO:        out std_logic;
+    TDO_EN:     out std_logic;
     TRST_N:     in std_logic;
 
     -- The FSM state indicators
@@ -44,9 +45,17 @@ end c4m_jtag_tap_controller;
 architecture rtl of c4m_jtag_tap_controller is
   signal S_STATE:       TAPSTATE_TYPE;
   signal S_NEXT_STATE:  TAPSTATE_TYPE;
-  signal S_IRSTATE:       std_logic;
-  signal S_DRSTATE:       std_logic;
+  signal S_IRSTATE:     std_logic;
+  signal S_DRSTATE:     std_logic;
   signal S_IR:          std_logic_vector(IR_WIDTH-1 downto 0);
+
+  signal IR_TDO:        std_logic;
+  signal IR_TDO_EN:     std_logic;
+  signal ID_TDO:        std_logic;
+  signal ID_TDO_EN:     std_logic;
+  signal IO_TDO:        std_logic;
+  signal IO_TDO_EN:     std_logic;
+  signal EN:            std_logic_vector(2 downto 0) := "000";
 
   -- TODO: Automate PART_NUMBER generation
   constant PART_NUMBER: std_logic_vector(15 downto 0) := "0000000010001001";
@@ -78,7 +87,8 @@ begin
     port map (
       TCK => TCK,
       TDI => TDI,
-      TDO => TDO,
+      TDO => IR_TDO,
+      TDO_EN => IR_TDO_EN,
       STATE => S_STATE,
       NEXT_STATE => S_NEXT_STATE,
       IRSTATE => S_IRSTATE,
@@ -95,7 +105,8 @@ begin
     port map (
       TCK => TCK,
       TDI => TDI,
-      TDO => TDO,
+      TDO => ID_TDO,
+      TDO_EN => ID_TDO_EN,
       STATE => S_STATE,
       NEXT_STATE => S_NEXT_STATE,
       DRSTATE => S_DRSTATE,
@@ -111,7 +122,8 @@ begin
     port map (
       TCK => TCK,
       TDI => TDI,
-      TDO => TDO,
+      TDO => IO_TDO,
+      TDO_EN => IO_TDO_EN,
       STATE => S_STATE,
       NEXT_STATE => S_NEXT_STATE,
       DRSTATE => S_DRSTATE,
@@ -123,6 +135,17 @@ begin
       PAD_IN => PAD_IN,
       PAD_EN => PAD_EN
     );
+
+  TDO <= IR_TDO when IR_TDO_EN = '1' else
+         ID_TDO when ID_TDO_EN = '1' else
+         IO_TDO when IO_TDO_EN = '1' else
+         '0';
+  TDO_EN <= IR_TDO_EN or ID_TDO_EN or IO_TDO_EN;
+
+  EN <= IR_TDO_EN & ID_TDO_EN & IO_TDO_EN;
+  assert EN = "000" or EN = "100" or EN = "010" or EN = "001"
+    report "TDO conflict in c4m_jtag_tap_controller"
+    severity ERROR;
 end rtl;
 
 

@@ -14,6 +14,7 @@ entity c4m_jtag_irblock is
     TCK:        in std_logic;
     TDI:        in std_logic;
     TDO:        out std_logic;
+    TDO_EN:     out std_logic := '0';
     
     -- JTAG state
     STATE:      in TAPSTATE_TYPE;
@@ -57,5 +58,7 @@ begin
   end process;
 
   TDO <= SHIFT_IR(0) when STATE = Shift and IRSTATE = '1' else
-         'Z';
+         '0';
+  TDO_EN <= '1' when STATE = Shift and IRSTATE = '1' else
+            '0';
 end rtl;
