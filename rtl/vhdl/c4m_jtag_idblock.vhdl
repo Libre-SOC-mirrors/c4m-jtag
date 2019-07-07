@@ -9,9 +9,9 @@ entity c4m_jtag_idblock is
   generic (
     IR_WIDTH:           integer := 2;
     
-    PART_NUMBER:        std_logic_vector(15 downto 0);
-    VERSION:            std_logic_vector(3 downto 0) := "0100";
-    MANUFACTURER:       std_logic_vector(10 downto 0)
+    MANUFACTURER:       std_logic_vector(10 downto 0) := "10001111111";
+    PART_NUMBER:        std_logic_vector(15 downto 0) := "0000000000000001";
+    VERSION:            std_logic_vector(3 downto 0) := "0000"
   );
   port (
     -- needed TAP signals

@@ -8,10 +8,12 @@ use work.c4m_jtag.ALL;
 
 entity c4m_jtag_tap_controller is
   generic (
-    IR_WIDTH:   integer := 2;
-    IOS:        integer := 1;
+    IR_WIDTH:           integer := 2;
+    IOS:                integer := 1;
 
-    VERSION:    std_logic_vector(3 downto 0)
+    MANUFACTURER:       std_logic_vector(10 downto 0) := "10001111111";
+    PART_NUMBER:        std_logic_vector(15 downto 0) := "0000000000000001";
+    VERSION:            std_logic_vector(3 downto 0) := "0000"
   );
   port (
     -- The TAP signals
@@ -56,11 +58,6 @@ architecture rtl of c4m_jtag_tap_controller is
   signal IO_TDO:        std_logic;
   signal IO_TDO_EN:     std_logic;
   signal EN:            std_logic_vector(2 downto 0) := "000";
-
-  -- TODO: Automate PART_NUMBER generation
-  constant PART_NUMBER: std_logic_vector(15 downto 0) := "0000000010001001";
-  -- TODO: Get manufacturer ID
-  constant MANUFACTURER: std_logic_vector(10 downto 0) := "00000000000";
 begin
   STATE <= S_STATE;
   NEXT_STATE <= S_NEXT_STATE;

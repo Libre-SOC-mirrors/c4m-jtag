@@ -68,9 +68,11 @@ package c4m_jtag is
     generic (
       IR_WIDTH:         integer := 2;
     
-      PART_NUMBER:      std_logic_vector(15 downto 0);
-      VERSION:          std_logic_vector(3 downto 0) := "0000";
-      MANUFACTURER:     std_logic_vector(10 downto 0)
+      -- The default MANUFACTURING ID is not representing a valid
+      -- manufacturer according to the JTAG standard
+      MANUFACTURER:     std_logic_vector(10 downto 0) := "10001111111";
+      PART_NUMBER:      std_logic_vector(15 downto 0) := "0000000000000001";
+      VERSION:          std_logic_vector(3 downto 0) := "0000"
     );
     port (
       -- needed TAP signals
@@ -146,10 +148,14 @@ package c4m_jtag is
 
   component c4m_jtag_tap_controller is
     generic (
-      IR_WIDTH: integer := 2;
-      IOS:      integer := 1;
+      IR_WIDTH:         integer := 2;
+      IOS:              integer := 1;
 
-      VERSION:  std_logic_vector(3 downto 0) := "0000"
+      -- The default MANUFACTURING ID is not representing a valid
+      -- manufacturer according to the JTAG standard
+      MANUFACTURER:     std_logic_vector(10 downto 0) := "10001111111";
+      PART_NUMBER:      std_logic_vector(15 downto 0) := "0000000000000001";
+      VERSION:          std_logic_vector(3 downto 0) := "0000"
     );
     port (
       -- The TAP signals
