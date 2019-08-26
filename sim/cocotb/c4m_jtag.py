@@ -1,6 +1,5 @@
 import cocotb
 from cocotb.triggers import Timer
-from cocotb.utils import get_sim_steps
 from cocotb.binary import BinaryValue
 
 class JTAGException(Exception):

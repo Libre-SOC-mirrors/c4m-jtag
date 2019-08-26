@@ -1,7 +1,5 @@
 import cocotb
-from cocotb.triggers import Timer
 from cocotb.utils import get_sim_steps
-from cocotb.binary import BinaryValue
 
 from c4m_jtag import JTAG_Master
 
