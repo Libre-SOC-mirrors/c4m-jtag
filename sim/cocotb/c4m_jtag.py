@@ -44,7 +44,8 @@ class JTAG_Master(object):
         tdi <= 0
         self.tdo = tdo
         self.trst_n = trst_n
-        trst_n <= 1
+        if trst_n is not None:
+            trst_n <= 1
         self.period = Timer(clk_period)
 
         # Standard commands
