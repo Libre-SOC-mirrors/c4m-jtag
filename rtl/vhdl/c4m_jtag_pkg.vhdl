@@ -163,13 +163,13 @@ package c4m_jtag is
       TMS:      in std_logic;
       TDI:      in std_logic;
       TDO:      out std_logic;
-      TDO_EN:   out std_logic;
       TRST_N:   in std_logic;
 
       -- The FSM state indicators
-      STATE:    out TAPSTATE_TYPE;
-      NEXT_STATE: out TAPSTATE_TYPE;
-      DRSTATE:  out std_logic;
+      RESET:    out std_logic; -- In reset state
+      DRCAPTURE: out std_logic; -- In DR_Capture state
+      DRSHIFT:  out std_logic; -- In DR_Shift state
+      DRUPDATE: out std_logic; -- In DR_Update state
 
       -- The Instruction Register
       IR:       out std_logic_vector(IR_WIDTH-1 downto 0);

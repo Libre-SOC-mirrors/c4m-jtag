@@ -21,13 +21,13 @@ entity c4m_jtag_tap_controller is
     TMS:        in std_logic;
     TDI:        in std_logic;
     TDO:        out std_logic;
-    TDO_EN:     out std_logic;
     TRST_N:     in std_logic;
 
     -- The FSM state indicators
-    STATE:      out TAPSTATE_TYPE;
-    NEXT_STATE: out TAPSTATE_TYPE;
-    DRSTATE:    out std_logic;
+    RESET:      out std_logic;
+    DRCAPTURE:  out std_logic;
+    DRSHIFT:    out std_logic;
+    DRUPDATE:   out std_logic;
 
     -- The Instruction Register
     IR:         out std_logic_vector(IR_WIDTH-1 downto 0);
@@ -59,10 +59,12 @@ architecture rtl of c4m_jtag_tap_controller is
   signal IO_TDO_EN:     std_logic;
   signal EN:            std_logic_vector(2 downto 0) := "000";
 begin
-  STATE <= S_STATE;
-  NEXT_STATE <= S_NEXT_STATE;
-  DRSTATE <= S_DRSTATE;
   IR <= S_IR;
+
+  RESET     <= '1' when S_STATE = TestLogicReset              else '0';
+  DRCAPTURE <= '1' when S_STATE = Capture and S_DRSTATE = '1' else '0';
+  DRSHIFT   <= '1' when S_STATE = Shift   and S_DRSTATE = '1' else '0';
+  DRUPDATE  <= '1' when S_STATE = Update  and S_DRSTATE = '1' else '0';
 
   -- JTAG state machine
   FSM:  c4m_jtag_tap_fsm
@@ -137,7 +139,6 @@ begin
          ID_TDO when ID_TDO_EN = '1' else
          IO_TDO when IO_TDO_EN = '1' else
          '0';
-  TDO_EN <= IR_TDO_EN or ID_TDO_EN or IO_TDO_EN;
 
   EN <= IR_TDO_EN & ID_TDO_EN & IO_TDO_EN;
   assert EN = "000" or EN = "100" or EN = "010" or EN = "001"
