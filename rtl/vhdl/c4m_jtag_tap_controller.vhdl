@@ -8,6 +8,8 @@ use work.c4m_jtag.ALL;
 
 entity c4m_jtag_tap_controller is
   generic (
+    DEBUG:              boolean := false;
+
     IR_WIDTH:           integer := 2;
     IOS:                integer := 1;
 
@@ -57,7 +59,6 @@ architecture rtl of c4m_jtag_tap_controller is
   signal ID_TDO_EN:     std_logic;
   signal IO_TDO:        std_logic;
   signal IO_TDO_EN:     std_logic;
-  signal EN:            std_logic_vector(2 downto 0) := "000";
 begin
   IR <= S_IR;
 
@@ -140,10 +141,14 @@ begin
          IO_TDO when IO_TDO_EN = '1' else
          '0';
 
-  EN <= IR_TDO_EN & ID_TDO_EN & IO_TDO_EN;
-  assert EN = "000" or EN = "100" or EN = "010" or EN = "001"
-    report "TDO conflict in c4m_jtag_tap_controller"
-    severity ERROR;
+  CHECK_EN: if DEBUG generate
+    signal EN:  std_logic_vector(2 downto 0) := "000";
+  begin
+    EN <= IR_TDO_EN & ID_TDO_EN & IO_TDO_EN;
+    assert EN = "000" or EN = "100" or EN = "010" or EN = "001"
+      report "TDO conflict in c4m_jtag_tap_controller"
+      severity ERROR;
+  end generate CHECK_EN;
 end rtl;
 
 

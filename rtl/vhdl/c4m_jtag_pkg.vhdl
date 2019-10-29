@@ -148,6 +148,8 @@ package c4m_jtag is
 
   component c4m_jtag_tap_controller is
     generic (
+      DEBUG:            boolean := false;
+
       IR_WIDTH:         integer := 2;
       IOS:              integer := 1;
 
