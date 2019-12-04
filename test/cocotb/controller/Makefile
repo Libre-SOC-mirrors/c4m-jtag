@@ -1,6 +1,14 @@
-PWD=$(realpath .)
+CURDIR=$(realpath .)
 TOPDIR=$(realpath ../../..)
-VHDLDIR=$(TOPDIR)/rtl/vhdl
+
+ifeq ($(PYTHONPATH),)
+  PYTHONPATH := $(TOPDIR)
+else
+  PYTHONPATH := $(TOPDIR):$(PYTHONPATH)
+endif
+export PYTHONPATH
+
+VHDLDIR=$(TOPDIR)/c4m/vhdl/jtag
 VHDL_SOURCES = \
   $(VHDLDIR)/c4m_jtag_pkg.vhdl \
   $(VHDLDIR)/c4m_jtag_tap_fsm.vhdl \
@@ -16,7 +24,7 @@ SIM=ghdl
 GPI_IMPL=vhpi
 SIM_ARGS=--wave=test.ghw
 
-COCOTBDIR=$(shell cocotb-path)
+COCOTBMAKEFILESDIR=$(shell cocotb-config --makefiles)
 
-include $(COCOTBDIR)/makefiles/Makefile.inc
-include $(COCOTBDIR)/makefiles/Makefile.sim
+include $(COCOTBMAKEFILESDIR)/Makefile.inc
+include $(COCOTBMAKEFILESDIR)/Makefile.sim

@@ -2,7 +2,7 @@ import cocotb
 from cocotb.utils import get_sim_steps
 from cocotb.binary import BinaryValue
 
-from c4m_jtag import JTAG_Master
+from c4m.cocotb.jtag.c4m_jtag import JTAG_Master
 
 @cocotb.test()
 def test01_idcode(dut):

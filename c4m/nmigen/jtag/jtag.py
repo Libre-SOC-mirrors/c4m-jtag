@@ -216,8 +216,8 @@ class JTAGWishbone(Elaboratable):
 class JTAG(Elaboratable):
     @staticmethod
     def _add_files(platform, prefix):
-        d = os.path.realpath("{0}{1}{2}{1}vhdl".format(
-            os.path.dirname(__file__), os.path.sep, os.path.pardir
+        d = os.path.realpath("{dir}{sep}{par}{sep}{par}{sep}vhdl{sep}jtag".format(
+            dir=os.path.dirname(__file__), sep=os.path.sep, par=os.path.pardir
         )) + os.path.sep
         for fname in [
             "c4m_jtag_pkg.vhdl",
