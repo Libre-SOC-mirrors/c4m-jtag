@@ -6,3 +6,4 @@ results.xml
 *.ghw
 sim/ghdl/bench_idcode
 build
+*.egg-info
