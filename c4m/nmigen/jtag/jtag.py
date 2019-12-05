@@ -8,52 +8,10 @@ from nmigen.lib.io import *
 from wishbone import Wishbone
 
 __all__ = [
-    "PmodJTAGMasterResource",
-    "PmodJTAGMasterAResource",
-    "PmodJTAGSlaveResource",
-    "PmodJTAGSlaveAResource",
     "JTAG",
 ]
 
 #TODO: Provide more documentation
-
-def PmodJTAGMasterResource(name, number, *, pmod, attrs=Attrs(IOSTANDARD="LVCMOS33")):
-    return Resource(name, number,
-        Subsignal("TCK", Pins("1", dir="o", conn=("pmod", pmod))),
-        Subsignal("TMS", Pins("2", dir="o", conn=("pmod", pmod))),
-        Subsignal("TDO", Pins("3", dir="o", conn=("pmod", pmod))),
-        Subsignal("TDI", Pins("4", dir="i", conn=("pmod", pmod))),
-        attrs,
-    )
-
-def PmodJTAGMasterAResource(name, number, *, pmod, attrs=Attrs(IOSTANDARD="LVCMOS33")):
-    return Resource(name, number,
-        Subsignal("TCK", Pins("1", dir="o", conn=("pmod", pmod))),
-        Subsignal("TMS", Pins("2", dir="o", conn=("pmod", pmod))),
-        Subsignal("TDO", Pins("3", dir="o", conn=("pmod", pmod))),
-        Subsignal("TDI", Pins("4", dir="i", conn=("pmod", pmod))),
-        Subsignal("TRST", PinsN("7", dir="o", conn=("pmod", pmod))),
-        attrs,
-    )
-
-def PmodJTAGSlaveResource(name, number, *, pmod, attrs=Attrs(IOSTANDARD="LVCMOS33")):
-    return Resource(name, number,
-        Subsignal("TCK", Pins("1", dir="i", conn=("pmod", pmod))),
-        Subsignal("TMS", Pins("2", dir="i", conn=("pmod", pmod))),
-        Subsignal("TDI", Pins("3", dir="i", conn=("pmod", pmod))),
-        Subsignal("TDO", Pins("4", dir="o", conn=("pmod", pmod))),
-        attrs,
-    )
-
-def PmodJTAGSlaveAResource(name, number, *, pmod, attrs=Attrs(IOSTANDARD="LVCMOS33")):
-    return Resource(name, number,
-        Subsignal("TCK", Pins("1", dir="i", conn=("pmod", pmod))),
-        Subsignal("TMS", Pins("2", dir="i", conn=("pmod", pmod))),
-        Subsignal("TDI", Pins("3", dir="i", conn=("pmod", pmod))),
-        Subsignal("TDO", Pins("4", dir="o", conn=("pmod", pmod))),
-        Subsignal("TRST", PinsN("7", dir="i", conn=("pmod", pmod))),
-        attrs,
-    )
 
 
 class ShiftReg(Elaboratable):
