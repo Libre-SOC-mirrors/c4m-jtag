@@ -56,24 +56,6 @@ def PmodJTAGSlaveAResource(name, number, *, pmod, attrs=Attrs(IOSTANDARD="LVCMOS
     )
 
 
-def _add_files(platform, prefix):
-    d = os.path.realpath("{0}{1}{2}{1}vhdl".format(
-        os.path.dirname(__file__), os.path.sep, os.path.pardir
-    )) + os.path.sep
-    for fname in [
-        "c4m_jtag_pkg.vhdl",
-        "c4m_jtag_idblock.vhdl",
-        "c4m_jtag_iocell.vhdl",
-        "c4m_jtag_ioblock.vhdl",
-        "c4m_jtag_irblock.vhdl",
-        "c4m_jtag_tap_fsm.vhdl",
-        "c4m_jtag_tap_controller.vhdl",
-    ]:
-        f = open(d + fname, "r")
-        platform.add_file(prefix + fname, f)
-        f.close()
-
-
 class ShiftReg(Elaboratable):
     def __init__(self, ircodes, length, domain):
         # The sr record will be returned to user code
@@ -232,7 +214,24 @@ class JTAGWishbone(Elaboratable):
 
 
 class JTAG(Elaboratable):
-    _files_added = []
+    @staticmethod
+    def _add_files(platform, prefix):
+        d = os.path.realpath("{0}{1}{2}{1}vhdl".format(
+            os.path.dirname(__file__), os.path.sep, os.path.pardir
+        )) + os.path.sep
+        for fname in [
+            "c4m_jtag_pkg.vhdl",
+            "c4m_jtag_idblock.vhdl",
+            "c4m_jtag_iocell.vhdl",
+            "c4m_jtag_ioblock.vhdl",
+            "c4m_jtag_irblock.vhdl",
+            "c4m_jtag_tap_fsm.vhdl",
+            "c4m_jtag_tap_controller.vhdl",
+        ]:
+            f = open(d + fname, "r")
+            platform.add_file(prefix + fname, f)
+            f.close()
+
 
     def __init__(self, io_count, *, ir_width=None, manufacturer_id=Const(0b10001111111, 11),
                  part_number=Const(1, 16), version=Const(0, 4)
@@ -265,7 +264,7 @@ class JTAG(Elaboratable):
         self._wbs = []
 
     def elaborate(self, platform):
-        _add_files(platform, "jtag" + os.path.sep)
+        JTAG._add_files(platform, "jtag" + os.path.sep)
 
         m = Module()
 
