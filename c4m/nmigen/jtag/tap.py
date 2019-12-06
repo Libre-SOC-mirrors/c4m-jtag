@@ -6,7 +6,7 @@ from nmigen.build import *
 from nmigen.lib.io import *
 from nmigen.tracer import get_var_name
 
-from wishbone import Wishbone
+from c4m_repo.nmigen.lib import Wishbone
 
 __all__ = [
     "TAP",
