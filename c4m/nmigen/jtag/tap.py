@@ -321,8 +321,7 @@ class TAP(Elaboratable):
                         # If data is
                         m.d[domain] += wb.adr.eq(wb.adr + 1)
                         m.next = "READ"
-
-                    with m.If(sr_data.oe[1]): # WBWRITE code
+                    with m.Elif(sr_data.oe[1]): # WBWRITE code
                         m.d[domain] += wb.dat_w.eq(sr_data.o)
                         m.next = "WRITEREAD"
                 with m.State("READ"):
