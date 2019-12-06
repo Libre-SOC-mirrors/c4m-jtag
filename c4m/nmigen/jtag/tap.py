@@ -309,11 +309,6 @@ class TAP(Elaboratable):
 
             with m.FSM(domain=domain) as fsm:
                 with m.State("IDLE"):
-                    m.d.comb += [
-                        wb.cyc.eq(0),
-                        wb.stb.eq(0),
-                        wb.we.eq(0),
-                    ]
                     with m.If(sr_addr.oe): # WBADDR code
                         m.d[domain] += wb.adr.eq(sr_addr.o)
                         m.next = "READ"
@@ -325,37 +320,23 @@ class TAP(Elaboratable):
                         m.d[domain] += wb.dat_w.eq(sr_data.o)
                         m.next = "WRITEREAD"
                 with m.State("READ"):
-                    m.d.comb += [
-                        wb.cyc.eq(1),
-                        wb.stb.eq(1),
-                        wb.we.eq(0),
-                    ]
                     with m.If(~wb.stall):
                         m.next = "READACK"
                 with m.State("READACK"):
-                    m.d.comb += [
-                        wb.cyc.eq(1),
-                        wb.stb.eq(0),
-                        wb.we.eq(0),
-                    ]
                     with m.If(wb.ack):
                         # Store read data in sr_data.i and keep it there til next read
                         m.d[domain] += sr_data.i.eq(wb.dat_r)
                         m.next = "IDLE"
                 with m.State("WRITEREAD"):
-                    m.d.comb += [
-                        wb.cyc.eq(1),
-                        wb.stb.eq(1),
-                        wb.we.eq(1),
-                    ]
                     with m.If(~wb.stall):
                         m.next = "WRITEREADACK"
                 with m.State("WRITEREADACK"):
-                    m.d.comb += [
-                        wb.cyc.eq(1),
-                        wb.stb.eq(0),
-                        wb.we.eq(0),
-                    ]
                     with m.If(wb.ack):
                         m.d[domain] += wb.adr.eq(wb.adr + 1)
                         m.next = "READ"
+
+                m.d.comb += [
+                    wb.cyc.eq(~fsm.ongoing("IDLE")),
+                    wb.stb.eq(fsm.ongoing("READ") | fsm.ongoing("WRITEREAD")),
+                    wb.we.eq(fsm.ongoing("WRITEREAD")),
+                ]
