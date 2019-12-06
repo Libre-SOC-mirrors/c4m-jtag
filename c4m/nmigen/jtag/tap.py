@@ -8,6 +8,8 @@ from nmigen.tracer import get_var_name
 
 from c4m_repo.nmigen.lib import Wishbone
 
+from .bus import Interface
+
 __all__ = [
     "TAP",
 ]
@@ -191,18 +193,21 @@ class TAP(Elaboratable):
             f.close()
 
 
-    def __init__(self, io_count, *, ir_width=None, manufacturer_id=Const(0b10001111111, 11),
-                 part_number=Const(1, 16), version=Const(0, 4)
+    def __init__(
+        self, io_count, *, with_reset=False, ir_width=None,
+        manufacturer_id=Const(0b10001111111, 11), part_number=Const(1, 16),
+        version=Const(0, 4),
+        name=None, src_loc_at=0
     ):
         assert(isinstance(io_count, int) and io_count > 0)
         assert((ir_width is None) or (isinstance(ir_width, int) and ir_width >= 2))
         assert(len(version) == 4)
 
+        self.name = name if name is not None else get_var_name(depth=src_loc_at+2, default="TAP")
+        self.bus = Interface(with_reset=with_reset, name=self.name+"_bus",
+                             src_loc_at=src_loc_at+1)
+
         # TODO: Handle IOs with different directions
-        self.tck  = Signal()
-        self.tms  = Signal()
-        self.tdo  = Signal()
-        self.tdi  = Signal()
         self.core = Array(Pin(1, "io") for _ in range(io_count)) # Signals to use for core
         self.pad  = Array(Pin(1, "io") for _ in range(io_count)) # Signals going to IO pads
 
@@ -253,9 +258,9 @@ class TAP(Elaboratable):
             "p_MANUFACTURER": self._manufacturer_id,
             "p_PART_NUMBER": self._part_number,
             "p_VERSION": self._version,
-            "i_TCK": self.tck,
-            "i_TMS": self.tms,
-            "i_TDI": self.tdi,
+            "i_TCK": self.bus.tck,
+            "i_TMS": self.bus.tms,
+            "i_TDI": self.bus.tdi,
             "o_TDO": tdo_jtag,
             "i_TRST_N": Const(1),
             "o_RESET": reset,
@@ -273,7 +278,7 @@ class TAP(Elaboratable):
         m.submodules.tap = Instance("c4m_jtag_tap_controller", **params)
 
         m.d.comb += [
-            self.jtag_cd.clk.eq(self.tck),
+            self.jtag_cd.clk.eq(self.bus.tck),
             self.jtag_cd.rst.eq(reset),
         ]
 
@@ -281,7 +286,7 @@ class TAP(Elaboratable):
             m.submodules["sr{}".format(i)] = sr
             sr.ir = ir
             m.d.comb += [
-                sr.tdi.eq(self.tdi),
+                sr.tdi.eq(self.bus.tdi),
                 sr.capture.eq(capture),
                 sr.shift.eq(shift),
                 sr.update.eq(update),
@@ -293,14 +298,14 @@ class TAP(Elaboratable):
                 if first:
                     first = False
                     with m.If(sr.tdo_en):
-                        m.d.comb += self.tdo.eq(sr.tdo)
+                        m.d.comb += self.bus.tdo.eq(sr.tdo)
                 else:
                     with m.Elif(sr.tdo_en):
-                        m.d.comb += self.tdo.eq(sr.tdo)
+                        m.d.comb += self.bus.tdo.eq(sr.tdo)
             with m.Else():
-                m.d.comb += self.tdo.eq(tdo_jtag)
+                m.d.comb += self.bus.tdo.eq(tdo_jtag)
         else:
-            m.d.comb += self.tdo.eq(tdo_jtag)
+            m.d.comb += self.bus.tdo.eq(tdo_jtag)
 
         for i, wb in enumerate(self._wbs):
             m.submodules["wb{}".format(i)] = wb
