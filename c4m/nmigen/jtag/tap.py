@@ -4,14 +4,13 @@ import os
 from nmigen import *
 from nmigen.build import *
 from nmigen.lib.io import *
+from nmigen.tracer import get_var_name
 
 from wishbone import Wishbone
 
 __all__ = [
-    "JTAG",
+    "TAP",
 ]
-
-#TODO: Provide more documentation
 
 
 class ShiftReg(Elaboratable):
@@ -171,7 +170,8 @@ class JTAGWishbone(Elaboratable):
         return m
 
 
-class JTAG(Elaboratable):
+class TAP(Elaboratable):
+    #TODO: Document TAP
     @staticmethod
     def _add_files(platform, prefix):
         d = os.path.realpath("{dir}{sep}{par}{sep}{par}{sep}vhdl{sep}jtag".format(
@@ -222,7 +222,7 @@ class JTAG(Elaboratable):
         self._wbs = []
 
     def elaborate(self, platform):
-        JTAG._add_files(platform, "jtag" + os.path.sep)
+        TAP._add_files(platform, "jtag" + os.path.sep)
 
         m = Module()
 
