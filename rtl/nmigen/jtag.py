@@ -199,7 +199,8 @@ class JTAGWishbone(Elaboratable):
                     wb.stb.eq(1),
                     wb.we.eq(0),
                 ]
-                m.next = "READACK"
+                with m.If(~wb.stall):
+                    m.next = "READACK"
             with m.State("READACK"):
                 m.d.comb += [
                     wb.cyc.eq(1),
@@ -215,7 +216,8 @@ class JTAGWishbone(Elaboratable):
                     wb.stb.eq(1),
                     wb.we.eq(1),
                 ]
-                m.next = "WRITEREADACK"
+                with m.If(~wb.stall):
+                    m.next = "WRITEREADACK"
             with m.State("WRITEREADACK"):
                 m.d.comb += [
                     wb.cyc.eq(1),
