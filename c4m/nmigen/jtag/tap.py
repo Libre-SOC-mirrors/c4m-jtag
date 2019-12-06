@@ -7,7 +7,7 @@ from nmigen.lib.io import *
 from nmigen.hdl.rec import Direction
 from nmigen.tracer import get_var_name
 
-from c4m_repo.nmigen.lib import Wishbone
+from nmigen_soc.wishbone import Interface as WishboneInterface
 
 from .bus import Interface
 
@@ -269,19 +269,24 @@ class TAP(Elaboratable):
             m.d.comb += self.bus.tdo.eq(sigs.tdo_jtag)
 
 
-    def add_wishbone(self, *, ircodes, address_width, data_width, sel_width=None, domain="sync"):
+    def add_wishbone(self, *, ircodes, address_width, data_width, granularity=None, domain="sync"):
         """Add a wishbone interface
 
         In order to allow high JTAG clock speed, data will be cached. This means that if data is
         output the value of the next address will be read automatically.
 
         Parameters:
+        -----------
         ircodes: sequence of three integer for the JTAG IR codes;
           they represent resp. WBADDR, WBREAD and WBREADWRITE. First code
           has a shift register of length 'address_width', the two other codes
           share a shift register of length data_width.
         address_width: width of the address
         data_width: width of the data
+
+        Returns:
+        wb: nmigen_soc.wishbone.bus.Interface
+            The Wishbone interface, is pipelined and has stall field.
         """
         if len(ircodes) != 3:
             raise ValueError("3 IR Codes have to be provided")
@@ -289,7 +294,8 @@ class TAP(Elaboratable):
         sr_addr = self.add_shiftreg(ircodes[0], address_width, domain=domain)
         sr_data = self.add_shiftreg(ircodes[1:], data_width, domain=domain)
 
-        wb = Wishbone(data_width=data_width, address_width=address_width, sel_width=sel_width, master=True)
+        wb = WishboneInterface(data_width=data_width, addr_width=address_width,
+                               granularity=granularity, features={"stall", "lock", "err", "rty"})
 
         self._wbs.append((sr_addr, sr_data, wb, domain))
 
@@ -309,11 +315,11 @@ class TAP(Elaboratable):
                         wb.we.eq(0),
                     ]
                     with m.If(sr_addr.oe): # WBADDR code
-                        m.d[domain] += wb.addr.eq(sr_addr.o)
+                        m.d[domain] += wb.adr.eq(sr_addr.o)
                         m.next = "READ"
                     with m.Elif(sr_data.oe[0]): # WBREAD code
                         # If data is
-                        m.d[domain] += wb.addr.eq(wb.addr + 1)
+                        m.d[domain] += wb.adr.eq(wb.adr + 1)
                         m.next = "READ"
 
                     with m.If(sr_data.oe[1]): # WBWRITE code
@@ -352,5 +358,5 @@ class TAP(Elaboratable):
                         wb.we.eq(0),
                     ]
                     with m.If(wb.ack):
-                        m.d[domain] += wb.addr.eq(wb.addr + 1)
+                        m.d[domain] += wb.adr.eq(wb.adr + 1)
                         m.next = "READ"
