@@ -82,7 +82,7 @@ class TAP(Elaboratable):
 
 
     def __init__(
-        self, io_count, *, ir_width=None,
+        self, io_count, *, with_reset=False, ir_width=None,
         manufacturer_id=Const(0b10001111111, 11), part_number=Const(1, 16),
         version=Const(0, 4),
         name=None, src_loc_at=0
@@ -92,7 +92,8 @@ class TAP(Elaboratable):
         assert(len(version) == 4)
 
         self.name = name if name is not None else get_var_name(depth=src_loc_at+2, default="TAP")
-        self.bus = Interface(name=self.name+"_bus", src_loc_at=src_loc_at+1)
+        self.bus = Interface(with_reset=with_reset, name=self.name+"_bus",
+                             src_loc_at=src_loc_at+1)
 
         # TODO: Handle IOs with different directions
         self.core = Array(Pin(1, "io") for _ in range(io_count)) # Signals to use for core
@@ -134,6 +135,9 @@ class TAP(Elaboratable):
 
         reset = Signal()
 
+        trst_n = Signal()
+        m.d.comb += trst_n.eq(~self.bus.trst if hasattr(self.bus, "trst") else Const(1))
+
         core_i = Cat(pin.i for pin in self.core)
         core_o = Cat(pin.o for pin in self.core)
         core_oe = Cat(pin.oe for pin in self.core)
@@ -151,7 +155,7 @@ class TAP(Elaboratable):
             "i_TMS": self.bus.tms,
             "i_TDI": self.bus.tdi,
             "o_TDO": sigs.tdo_jtag,
-            "i_TRST_N": Const(1),
+            "i_TRST_N": trst_n,
             "o_RESET": reset,
             "o_DRCAPTURE": sigs.capture,
             "o_DRSHIFT": sigs.shift,
