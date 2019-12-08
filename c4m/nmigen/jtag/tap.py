@@ -1,5 +1,5 @@
 #!/bin/env python3
-import os
+import os, textwrap
 
 from nmigen import *
 from nmigen.build import *
@@ -80,6 +80,89 @@ class TAP(Elaboratable):
             platform.add_file(prefix + fname, f)
             f.close()
 
+    _controller_templ = textwrap.dedent(r"""
+    library ieee;
+    use ieee.std_logic_1164.ALL;
+    
+    use work.c4m_jtag.ALL;
+    
+    entity {name} is
+      port (
+        -- The TAP signals
+        TCK:        in std_logic;
+        TMS:        in std_logic;
+        TDI:        in std_logic;
+        TDO:        out std_logic;
+        TRST_N:     in std_logic;
+    
+        -- The FSM state indicators
+        RESET:      out std_logic;
+        DRCAPTURE:  out std_logic;
+        DRSHIFT:    out std_logic;
+        DRUPDATE:   out std_logic;
+    
+        -- The Instruction Register
+        IR:         out std_logic_vector({ir_width}-1 downto 0);
+    
+        -- The I/O access ports
+        CORE_IN:    out std_logic_vector({ios}-1 downto 0);
+        CORE_EN:    in std_logic_vector({ios}-1 downto 0);
+        CORE_OUT:   in std_logic_vector({ios}-1 downto 0);
+    
+        -- The pad connections
+        PAD_IN:     in std_logic_vector({ios}-1 downto 0);
+        PAD_EN:     out std_logic_vector({ios}-1 downto 0);
+        PAD_OUT:    out std_logic_vector({ios}-1 downto 0)
+      );
+    end {name};
+    
+    architecture rtl of {name} is
+    begin
+      jtag : c4m_jtag_tap_controller
+        generic map(
+          DEBUG => FALSE,
+          IR_WIDTH => {ir_width},
+          IOS => {ios},
+          MANUFACTURER => "{manufacturer:011b}",
+          PART_NUMBER => "{part:016b}",
+          VERSION => "{version:04b}"
+        )
+        port map(
+          TCK => TCK,
+          TMS => TMS,
+          TDI => TDI,
+          TDO => TDO,
+          TRST_N => TRST_N,
+          RESET => RESET,
+          DRCAPTURE => DRCAPTURE,
+          DRSHIFT => DRSHIFT,
+          DRUPDATE => DRUPDATE,
+          IR => IR,
+          CORE_IN => CORE_IN,
+          CORE_EN => CORE_EN,
+          CORE_OUT => CORE_OUT,
+          PAD_IN => PAD_IN,
+          PAD_EN => PAD_EN,
+          PAD_OUT => PAD_OUT
+        );
+    end architecture rtl;
+    """)
+    _cell_inst = 0
+    @classmethod
+    def _add_instance(cls, platform, prefix, *, ir_width, ios, manufacturer, part, version):
+        name = "jtag_controller_i{}".format(cls._cell_inst)
+        cls._cell_inst += 1
+
+        platform.add_file(
+            "{}{}.vhdl".format(prefix, name),
+            cls._controller_templ.format(
+                name=name, ir_width=ir_width, ios=ios,
+                manufacturer=manufacturer, part=part, version=version,
+            )
+        )
+
+        return name
+
 
     def __init__(
         self, io_count, *, with_reset=False, ir_width=None,
@@ -114,7 +197,7 @@ class TAP(Elaboratable):
 
 
     def elaborate(self, platform):
-        TAP._add_files(platform, "jtag" + os.path.sep)
+        self.__class__._add_files(platform, "jtag" + os.path.sep)
 
         m = Module()
 
@@ -124,6 +207,12 @@ class TAP(Elaboratable):
         if self._ir_width is not None:
             assert self._ir_width >= ir_width, "Specified JTAG IR width not big enough for allocated shiift registers"
             ir_width = self._ir_width
+
+        cell = self.__class__._add_instance(
+            platform, "jtag" + os.path.sep, ir_width=ir_width, ios=self._io_count,
+            manufacturer=self._manufacturer_id.value, part=self._part_number.value,
+            version=self._version.value,
+        )
 
         sigs = Record([
             ("capture", 1),
@@ -145,30 +234,24 @@ class TAP(Elaboratable):
         pad_o = Cat(pin.o for pin in self.pad)
         pad_oe = Cat(pin.oe for pin in self.pad)
 
-        params = {
-            "p_IOS": self._io_count,
-            "p_IR_WIDTH": ir_width,
-            "p_MANUFACTURER": self._manufacturer_id,
-            "p_PART_NUMBER": self._part_number,
-            "p_VERSION": self._version,
-            "i_TCK": self.bus.tck,
-            "i_TMS": self.bus.tms,
-            "i_TDI": self.bus.tdi,
-            "o_TDO": sigs.tdo_jtag,
-            "i_TRST_N": trst_n,
-            "o_RESET": reset,
-            "o_DRCAPTURE": sigs.capture,
-            "o_DRSHIFT": sigs.shift,
-            "o_DRUPDATE": sigs.update,
-            "o_IR": sigs.ir,
-            "o_CORE_IN": core_i,
-            "i_CORE_OUT": core_o,
-            "i_CORE_EN": core_oe,
-            "i_PAD_IN": pad_i,
-            "o_PAD_OUT": pad_o,
-            "o_PAD_EN": pad_oe,
-        }
-        m.submodules.tap = Instance("c4m_jtag_tap_controller", **params)
+        m.submodules.tap = Instance(cell,
+            i_TCK=self.bus.tck,
+            i_TMS=self.bus.tms,
+            i_TDI=self.bus.tdi,
+            o_TDO=sigs.tdo_jtag,
+            i_TRST_N=trst_n,
+            o_RESET=reset,
+            o_CAPTURE=sigs.capture,
+            o_SHIFT=sigs.shift,
+            o_UPDATE=sigs.update,
+            o_IR=sigs.ir,
+            o_CORE_IN=core_i,
+            i_CORE_OUT=core_o,
+            i_CORE_EN=core_oe,
+            i_PAD_IN=pad_i,
+            o_PAD_OUT=pad_o,
+            o_PAD_EN=pad_oe,
+        )
 
         # Own clock domain using TCK as clock signal
         m.domains.jtag = jtag_cd = ClockDomain(name="jtag", local=True)
