@@ -97,9 +97,9 @@ class TAP(Elaboratable):
     
         -- The FSM state indicators
         RESET:      out std_logic;
-        DRCAPTURE:  out std_logic;
-        DRSHIFT:    out std_logic;
-        DRUPDATE:   out std_logic;
+        CAPTURE:    out std_logic;
+        SHIFT:      out std_logic;
+        UPDATE:     out std_logic;
     
         -- The Instruction Register
         IR:         out std_logic_vector({ir_width}-1 downto 0);
@@ -134,9 +134,9 @@ class TAP(Elaboratable):
           TDO => TDO,
           TRST_N => TRST_N,
           RESET => RESET,
-          DRCAPTURE => DRCAPTURE,
-          DRSHIFT => DRSHIFT,
-          DRUPDATE => DRUPDATE,
+          CAPTURE => CAPTURE,
+          SHIFT => SHIFT,
+          UPDATE => UPDATE,
           IR => IR,
           CORE_IN => CORE_IN,
           CORE_EN => CORE_EN,

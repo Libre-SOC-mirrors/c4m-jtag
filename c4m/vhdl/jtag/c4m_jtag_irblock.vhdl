@@ -15,14 +15,15 @@ entity c4m_jtag_irblock is
     TDI:        in std_logic;
     TDO:        out std_logic;
     TDO_EN:     out std_logic := '0';
-    
-    -- JTAG state
-    STATE:      in TAPSTATE_TYPE;
-    NEXT_STATE: in TAPSTATE_TYPE;
-    IRSTATE:    in std_logic;
 
     -- instruction register
-    IR:         out std_logic_vector(IR_WIDTH-1 downto 0)
+    IR:         out std_logic_vector(IR_WIDTH-1 downto 0);
+
+    -- actions
+    RESET:      in std_logic;
+    CAPTURE:    in std_logic;
+    SHIFT:      in std_logic;
+    UPDATE:     in std_logic
   );
 end c4m_jtag_irblock;
 
@@ -31,34 +32,26 @@ architecture rtl of c4m_jtag_irblock is
 
   constant CMD_IDCODE:  std_logic_vector(IR_WIDTH-1 downto 0) := c4m_jtag_cmd_idcode(IR_WIDTH);
 begin
-  process (TCK, STATE)
+  process (TCK)
   begin
-    if STATE = TestLogicReset then
+    if rising_edge(TCK) then
+      if RESET = '1' then
         SHIFT_IR <= (others => '0');
         IR <= CMD_IDCODE;
-    elsif rising_edge(TCK) then
-      if IRSTATE = '1' then
-        case STATE is
-          when Capture =>
-            SHIFT_IR(1) <= '0';
-            SHIFT_IR(0) <= '1';
-
-          when Shift =>
-            SHIFT_IR(IR_WIDTH-2 downto 0) <= SHIFT_IR(IR_WIDTH-1 downto 1);
-            SHIFT_IR(IR_WIDTH-1) <= TDI;
-
-          when Update =>
-            IR <= SHIFT_IR;
-
-          when others =>
-            null;
-        end case;
+      elsif CAPTURE = '1' then
+        SHIFT_IR(1) <= '0';
+        SHIFT_IR(0) <= '1';
+      elsif SHIFT = '1' then
+        SHIFT_IR(IR_WIDTH-2 downto 0) <= SHIFT_IR(IR_WIDTH-1 downto 1);
+        SHIFT_IR(IR_WIDTH-1) <= TDI;
+      elsif UPDATE = '1' then
+        IR <= SHIFT_IR;
       end if;
     end if;
   end process;
 
-  TDO <= SHIFT_IR(0) when STATE = Shift and IRSTATE = '1' else
-         '0';
-  TDO_EN <= '1' when STATE = Shift and IRSTATE = '1' else
+  TDO <= SHIFT_IR(0) when SHIFT = '1' else
+         'X';
+  TDO_EN <= '1' when SHIFT = '1' else
             '0';
 end rtl;

@@ -14,127 +14,144 @@ entity c4m_jtag_tap_fsm is
     TRST_N:     in std_logic;
 
     -- The state outputs
-    STATE:      out TAPSTATE_TYPE;
-    NEXT_STATE: out TAPSTATE_TYPE;
-    DRSTATE:    out std_logic;
-    IRSTATE:    out std_logic
+    RESET:      out std_logic;
+    ISDR:       out std_logic;
+    ISIR:       out std_logic;
+    CAPTURE:    out std_logic;
+    SHIFT:      out std_logic;
+    UPDATE:     out std_logic
   );
 end c4m_jtag_tap_fsm;
 
 architecture rtl of c4m_jtag_tap_fsm is
-  signal S_STATE:         TAPSTATE_TYPE;
-  signal S_NEXT_STATE:    TAPSTATE_TYPE;
-  signal S_DRSTATE:       std_logic;
-  signal S_IRSTATE:       std_logic;
-  signal NEXT_DRSTATE:    std_logic;
-  signal NEXT_IRSTATE:    std_logic;
+  type TAPSTATE_TYPE is (
+    TestLogicReset,
+    RunTestIdle,
+    SelectDRScan,
+    SelectIRScan,
+    CaptureState,
+    ShiftState,
+    Exit1,
+    Pause,
+    Exit2,
+    UpdateState
+  );
+  signal STATE:         TAPSTATE_TYPE;
+  signal DRSTATE:       std_logic;
+  signal IRSTATE:       std_logic;
+  signal NEXT_STATE:    TAPSTATE_TYPE;
+  signal NEXT_DRSTATE:  std_logic;
+  signal NEXT_IRSTATE:  std_logic;
 begin
-  STATE <= S_STATE;
-  NEXT_STATE <= S_NEXT_STATE;
-  DRSTATE <= S_DRSTATE;
-  IRSTATE <= S_IRSTATE;
-  
+  -- Generate outputs from the state
+  ISDR    <= DRSTATE;
+  ISIR    <= IRSTATE;
+  RESET   <= '1' when STATE = TestLogicReset else '0';
+  CAPTURE <= '1' when STATE = CaptureState   else '0';
+  SHIFT   <= '1' when STATE = ShiftState     else '0';
+  UPDATE  <= '1' when STATE = UpdateState    else '0';
+
   process (TCK, TRST_N)
   begin
     if TRST_N = '0' then
-      S_DRSTATE <= '0';
-      S_IRSTATE <= '0';
-      S_STATE <= TestLogicReset;
+      DRSTATE <= '0';
+      IRSTATE <= '0';
+      STATE <= TestLogicReset;
     elsif rising_edge(TCK) then
-      S_STATE <= S_NEXT_STATE;
-      S_DRSTATE <= NEXT_DRSTATE;
-      S_IRSTATE <= NEXT_IRSTATE;
+      STATE <= NEXT_STATE;
+      DRSTATE <= NEXT_DRSTATE;
+      IRSTATE <= NEXT_IRSTATE;
     end if;
   end process;
 
   NEXT_DRSTATE <=
-    '0' when S_NEXT_STATE = TestLogicReset else
-    '0' when S_NEXT_STATE = RunTestIdle else
-    '1' when S_NEXT_STATE = SelectDRScan else
-    '0' when S_NEXT_STATE = SelectIRScan else
-    S_DRSTATE;
+    '0' when NEXT_STATE = TestLogicReset else
+    '0' when NEXT_STATE = RunTestIdle else
+    '1' when NEXT_STATE = SelectDRScan else
+    '0' when NEXT_STATE = SelectIRScan else
+    DRSTATE;
   NEXT_IRSTATE <=
-    '0' when S_NEXT_STATE = TestLogicReset else
-    '0' when S_NEXT_STATE = RunTestIdle else
-    '0' when S_NEXT_STATE = SelectDRScan else
-    '1' when S_NEXT_STATE = SelectIRScan else
-    S_IRSTATE;
+    '0' when NEXT_STATE = TestLogicReset else
+    '0' when NEXT_STATE = RunTestIdle else
+    '0' when NEXT_STATE = SelectDRScan else
+    '1' when NEXT_STATE = SelectIRScan else
+    IRSTATE;
 
-  process (S_STATE, TMS)
+  process (STATE, TMS)
   begin
-    case S_STATE is
+    case STATE is
       when TestLogicReset =>
         if (TMS = '0') then
-          S_NEXT_STATE <= RunTestIdle;
+          NEXT_STATE <= RunTestIdle;
         else
-          S_NEXT_STATE <= TestLogicReset;
+          NEXT_STATE <= TestLogicReset;
         end if;
 
       when RunTestIdle =>
         if (TMS = '0') then
-          S_NEXT_STATE <= RunTestIdle;
+          NEXT_STATE <= RunTestIdle;
         else
-          S_NEXT_STATE <= SelectDRScan;
+          NEXT_STATE <= SelectDRScan;
         end if;
 
       when SelectDRScan =>
         if (TMS = '0') then
-          S_NEXT_STATE <= Capture;
+          NEXT_STATE <= CaptureState;
         else
-          S_NEXT_STATE <= SelectIRScan;
+          NEXT_STATE <= SelectIRScan;
         end if;
 
       when SelectIRScan =>
         if (TMS = '0') then
-          S_NEXT_STATE <= Capture;
+          NEXT_STATE <= CaptureState;
         else
-          S_NEXT_STATE <= TestLogicReset;
+          NEXT_STATE <= TestLogicReset;
         end if;
 
-      when Capture =>
+      when CaptureState =>
         if (TMS = '0') then
-          S_NEXT_STATE <= Shift;
+          NEXT_STATE <= ShiftState;
         else
-          S_NEXT_STATE <= Exit1;
+          NEXT_STATE <= Exit1;
         end if;
 
-      when Shift =>
+      when ShiftState =>
         if (TMS = '0') then
-          S_NEXT_STATE <= Shift;
+          NEXT_STATE <= ShiftState;
         else
-          S_NEXT_STATE <= Exit1;
+          NEXT_STATE <= Exit1;
         end if;
 
       when Exit1 =>
         if (TMS = '0') then
-          S_NEXT_STATE <= Pause;
+          NEXT_STATE <= Pause;
         else
-          S_NEXT_STATE <= Update;
+          NEXT_STATE <= UpdateState;
         end if;
 
       when Pause =>
         if (TMS = '0') then
-          S_NEXT_STATE <= Pause;
+          NEXT_STATE <= Pause;
         else
-          S_NEXT_STATE <= Exit2;
+          NEXT_STATE <= Exit2;
         end if;
 
       when Exit2 =>
         if (TMS = '0') then
-          S_NEXT_STATE <= Shift;
+          NEXT_STATE <= ShiftState;
         else
-          S_NEXT_STATE <= Update;
+          NEXT_STATE <= UpdateState;
         end if;
 
-      when Update =>
+      when UpdateState =>
         if (TMS = '0') then
-          S_NEXT_STATE <= RunTestIdle;
+          NEXT_STATE <= RunTestIdle;
         else
-          S_NEXT_STATE <= SelectDRScan;
+          NEXT_STATE <= SelectDRScan;
         end if;
 
       when others =>
-        S_NEXT_STATE <= TestLogicReset;
+        NEXT_STATE <= TestLogicReset;
     end case;
   end process;
 end rtl;

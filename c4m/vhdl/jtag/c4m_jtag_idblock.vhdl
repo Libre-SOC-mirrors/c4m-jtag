@@ -20,13 +20,13 @@ entity c4m_jtag_idblock is
     TDO:        out std_logic;
     TDO_EN:     out std_logic := '0';
 
-    -- JTAG state
-    STATE:      in TAPSTATE_TYPE;
-    NEXT_STATE: in TAPSTATE_TYPE;
-    DRSTATE:    in std_logic;
-
     -- The instruction
-    IR:         in std_logic_vector(IR_WIDTH-1 downto 0)
+    IR:         in std_logic_vector(IR_WIDTH-1 downto 0);
+
+    -- actions
+    CAPTURE:    in std_logic;
+    SHIFT:      in std_logic;
+    UPDATE:     in std_logic
   );
 end c4m_jtag_idblock;
 
@@ -42,31 +42,22 @@ begin
   process (TCK)
   begin
     if rising_edge(TCK) then
-      if DRSTATE = '1' then
-        case STATE is
-          when Capture =>
-            SR_ID <= IDCODE;
-
-          when Shift =>
-            if IR = CMD_IDCODE then
-              SR_ID(30 downto 0) <= SR_ID(31 downto 1);
-              SR_ID(31) <= TDI;
-            elsif IR = CMD_BYPASS then
-              SR_ID(0) <= TDI;
-            else
-              null;
-            end if;
-
-          when others =>
-            null;
-        end case;
+      if CAPTURE = '1' then
+        SR_ID <= IDCODE;
+      elsif SHIFT = '1' then
+        if IR = CMD_IDCODE then
+          SR_ID(30 downto 0) <= SR_ID(31 downto 1);
+          SR_ID(31) <= TDI;
+        elsif IR = CMD_BYPASS then
+          SR_ID(0) <= TDI;
+        end if;
       end if;
     end if;
   end process;
 
-  EN_TDO <= STATE = Shift and DRSTATE = '1' and (IR = CMD_IDCODE or IR = CMD_BYPASS);
   TDO <= SR_ID(0) when EN_TDO else
          '0';
+  EN_TDO <= SHIFT = '1' and (IR = CMD_IDCODE or IR = CMD_BYPASS);
   TDO_EN <= '1' when EN_TDO else
             '0';
 end rtl;

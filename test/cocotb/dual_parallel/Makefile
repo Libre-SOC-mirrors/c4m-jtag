@@ -23,6 +23,7 @@ TOPLEVEL_LANG=vhdl
 MODULE=test
 SIM=ghdl
 GPI_IMPL=vhpi
+GHDL_ARGS=--std=08
 SIM_ARGS=--wave=test.ghw
 
 COCOTBMAKEFILESDIR=$(shell cocotb-config --makefiles)

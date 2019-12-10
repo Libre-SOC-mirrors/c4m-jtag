@@ -25,14 +25,14 @@ entity c4m_jtag_tap_controller is
     TDO:        out std_logic;
     TRST_N:     in std_logic;
 
-    -- The FSM state indicators
-    RESET:      out std_logic;
-    DRCAPTURE:  out std_logic;
-    DRSHIFT:    out std_logic;
-    DRUPDATE:   out std_logic;
-
     -- The Instruction Register
     IR:         out std_logic_vector(IR_WIDTH-1 downto 0);
+
+    -- The FSM state indicators
+    RESET:      out std_logic;
+    CAPTURE:    out std_logic;
+    SHIFT:      out std_logic;
+    UPDATE:     out std_logic;
 
     -- The I/O access ports
     CORE_IN:    out std_logic_vector(IOS-1 downto 0);
@@ -47,10 +47,12 @@ entity c4m_jtag_tap_controller is
 end c4m_jtag_tap_controller;
 
 architecture rtl of c4m_jtag_tap_controller is
-  signal S_STATE:       TAPSTATE_TYPE;
-  signal S_NEXT_STATE:  TAPSTATE_TYPE;
-  signal S_IRSTATE:     std_logic;
-  signal S_DRSTATE:     std_logic;
+  signal S_RESET:       std_logic;
+  signal S_ISIR:        std_logic;
+  signal S_ISDR:        std_logic;
+  signal S_CAPTURE:     std_logic;
+  signal S_SHIFT:       std_logic;
+  signal S_UPDATE:      std_logic;
   signal S_IR:          std_logic_vector(IR_WIDTH-1 downto 0);
 
   signal IR_TDO:        std_logic;
@@ -61,11 +63,10 @@ architecture rtl of c4m_jtag_tap_controller is
   signal IO_TDO_EN:     std_logic;
 begin
   IR <= S_IR;
-
-  RESET     <= '1' when S_STATE = TestLogicReset              else '0';
-  DRCAPTURE <= '1' when S_STATE = Capture and S_DRSTATE = '1' else '0';
-  DRSHIFT   <= '1' when S_STATE = Shift   and S_DRSTATE = '1' else '0';
-  DRUPDATE  <= '1' when S_STATE = Update  and S_DRSTATE = '1' else '0';
+  RESET <= S_RESET;
+  CAPTURE <= S_CAPTURE and S_ISDR;
+  SHIFT <= S_SHIFT and S_ISDR;
+  UPDATE <= S_UPDATE and S_ISDR;
 
   -- JTAG state machine
   FSM:  c4m_jtag_tap_fsm
@@ -73,10 +74,12 @@ begin
       TCK => TCK,
       TMS => TMS,
       TRST_N => TRST_N,
-      STATE => S_STATE,
-      NEXT_STATE => S_NEXT_STATE,
-      DRSTATE => S_DRSTATE,
-      IRSTATE => S_IRSTATE
+      RESET => S_RESET,
+      ISIR => S_ISIR,
+      ISDR => S_ISDR,
+      CAPTURE => S_CAPTURE,
+      SHIFT => S_SHIFT,
+      UPDATE => S_UPDATE
     );
 
   -- The instruction register
@@ -89,10 +92,11 @@ begin
       TDI => TDI,
       TDO => IR_TDO,
       TDO_EN => IR_TDO_EN,
-      STATE => S_STATE,
-      NEXT_STATE => S_NEXT_STATE,
-      IRSTATE => S_IRSTATE,
-      IR => S_IR
+      IR => S_IR,
+      RESET => S_RESET,
+      CAPTURE => S_CAPTURE and S_ISIR,
+      SHIFT => S_SHIFT and S_ISIR,
+      UPDATE => S_UPDATE and S_ISIR
     );
 
   -- The ID
@@ -108,10 +112,10 @@ begin
       TDI => TDI,
       TDO => ID_TDO,
       TDO_EN => ID_TDO_EN,
-      STATE => S_STATE,
-      NEXT_STATE => S_NEXT_STATE,
-      DRSTATE => S_DRSTATE,
-      IR => S_IR
+      IR => S_IR,
+      CAPTURE => S_CAPTURE and S_ISDR,
+      SHIFT => S_SHIFT and S_ISDR,
+      UPDATE => S_UPDATE and S_ISDR
     );
   
   -- The IOS
@@ -125,10 +129,10 @@ begin
       TDI => TDI,
       TDO => IO_TDO,
       TDO_EN => IO_TDO_EN,
-      STATE => S_STATE,
-      NEXT_STATE => S_NEXT_STATE,
-      DRSTATE => S_DRSTATE,
       IR => S_IR,
+      CAPTURE => S_CAPTURE and S_ISDR,
+      SHIFT => S_SHIFT and S_ISDR,
+      UPDATE => S_UPDATE and S_ISDR,
       CORE_OUT => CORE_OUT,
       CORE_IN => CORE_IN,
       CORE_EN => CORE_EN,

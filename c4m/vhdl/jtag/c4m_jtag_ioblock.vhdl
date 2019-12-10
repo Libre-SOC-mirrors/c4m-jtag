@@ -17,13 +17,13 @@ entity c4m_jtag_ioblock is
     TDO:        out std_logic;
     TDO_EN:     out std_logic := '0';
 
-    -- JTAG state
-    STATE:      in TAPSTATE_TYPE;
-    NEXT_STATE: in TAPSTATE_TYPE;
-    DRSTATE:    in std_logic;
-
     -- The instruction
     IR:         in std_logic_vector(IR_WIDTH-1 downto 0);
+
+    -- What action to perform
+    CAPTURE:    in std_logic;
+    SHIFT:      in std_logic;
+    UPDATE:     in std_logic;
 
     -- The I/O access ports
     CORE_OUT:   in std_logic_vector(IOS-1 downto 0);
@@ -79,14 +79,14 @@ begin
             SR_Through;
 
   -- Set SAMPLEMODE
-  ISSAMPLECMD <= (IR = CMD_SAMPLEPRELOAD or IR = CMD_EXTEST) and DRSTATE = '1';
-  SAMPLEMODE <= SR_Sample when ISSAMPLECMD and STATE = Capture else
-                SR_Update when ISSAMPLECMD and STATE = Update else
-                SR_Shift when ISSAMPLECMD and STATE = Shift else
+  ISSAMPLECMD <= (IR = CMD_SAMPLEPRELOAD or IR = CMD_EXTEST);
+  SAMPLEMODE <= SR_Sample when ISSAMPLECMD and CAPTURE = '1' else
+                SR_Update when ISSAMPLECMD and UPDATE = '1' else
+                SR_Shift when ISSAMPLECMD and SHIFT = '1' else
                 SR_Normal;
 
-  TDO <= BDSR_OUT(0) when ISSAMPLECMD and STATE = Shift else
+  TDO <= BDSR_OUT(BDSR_IN'high) when ISSAMPLECMD and SHIFT = '1' else
          '0';
-  TDO_EN <= '1' when ISSAMPLECMD and STATE = Shift else
+  TDO_EN <= '1' when ISSAMPLECMD and SHIFT = '1' else
             '0';
 end rtl;

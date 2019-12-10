@@ -3,18 +3,6 @@ library ieee;
 use ieee.std_logic_1164.ALL;
 
 package c4m_jtag is
-  type TAPSTATE_TYPE is (
-    TestLogicReset,
-    RunTestIdle,
-    SelectDRScan,
-    SelectIRScan,
-    Capture,
-    Shift,
-    Exit1,
-    Pause,
-    Exit2,
-    Update
-  );
   type SRIOMODE_TYPE is (
     SR_Through, -- Connect core signal to pad signals
     SR_2Pad,    -- Connect BD to pad
@@ -41,10 +29,12 @@ package c4m_jtag is
       TRST_N:   in std_logic;
 
       -- The state outputs
-      STATE:    out TAPSTATE_TYPE;
-      NEXT_STATE: out TAPSTATE_TYPE;
-      DRSTATE:  out std_logic;
-      IRSTATE:  out std_logic
+      RESET:    out std_logic;
+      ISDR:     out std_logic;
+      ISIR:     out std_logic;
+      CAPTURE:  out std_logic;
+      SHIFT:    out std_logic;
+      UPDATE:   out std_logic
     );
   end component c4m_jtag_tap_fsm;
 
@@ -58,14 +48,15 @@ package c4m_jtag is
       TDI:      in std_logic;
       TDO:      out std_logic;
       TDO_EN:   out std_logic;
-    
-      -- JTAG state
-      STATE:    in TAPSTATE_TYPE;
-      NEXT_STATE: in TAPSTATE_TYPE;
-      IRSTATE:  in std_logic;
 
       -- instruction register
-      IR:       out std_logic_vector(IR_WIDTH-1 downto 0)
+      IR:       out std_logic_vector(IR_WIDTH-1 downto 0);
+
+      -- actions
+      RESET:    in std_logic;
+      CAPTURE:  in std_logic;
+      SHIFT:    in std_logic;
+      UPDATE:   in std_logic
     );
   end component c4m_jtag_irblock;
   
@@ -86,13 +77,13 @@ package c4m_jtag is
       TDO:      out std_logic;
       TDO_EN:   out std_logic;
 
-      -- JTAG state
-      STATE:    in TAPSTATE_TYPE;
-      NEXT_STATE: in TAPSTATE_TYPE;
-      DRSTATE:  in std_logic;
-
       -- The instruction
-      IR:       in std_logic_vector(IR_WIDTH-1 downto 0)
+      IR:       in std_logic_vector(IR_WIDTH-1 downto 0);
+
+      -- actions
+      CAPTURE:  in std_logic;
+      SHIFT:    in std_logic;
+      UPDATE:   in std_logic
     );
   end component c4m_jtag_idblock;
 
@@ -131,13 +122,13 @@ package c4m_jtag is
       TDO:      out std_logic;
       TDO_EN:   out std_logic;
 
-      -- JTAG state
-      STATE:    in TAPSTATE_TYPE;
-      NEXT_STATE: in TAPSTATE_TYPE;
-      DRSTATE:  in std_logic;
-
       -- The instruction
       IR:       in std_logic_vector(IR_WIDTH-1 downto 0);
+
+      -- What action to perform
+      CAPTURE:  in std_logic;
+      SHIFT:    in std_logic;
+      UPDATE:   in std_logic;
 
       -- The I/O access ports
       CORE_OUT: in std_logic_vector(IOS-1 downto 0);
@@ -172,15 +163,14 @@ package c4m_jtag is
       TDO:      out std_logic;
       TRST_N:   in std_logic;
 
-      -- The FSM state indicators
-      RESET:    out std_logic; -- In reset state
-      DRCAPTURE: out std_logic; -- In DR_Capture state
-      DRSHIFT:  out std_logic; -- In DR_Shift state
-      DRUPDATE: out std_logic; -- In DR_Update state
-
       -- The Instruction Register
       IR:       out std_logic_vector(IR_WIDTH-1 downto 0);
 
+      -- The FSM state indicators
+      RESET:    out std_logic; -- In reset state
+      CAPTURE:  out std_logic; -- In DR_Capture state
+      SHIFT:    out std_logic; -- In DR_Shift state
+      UPDATE:   out std_logic; -- In DR_Update state
       -- The I/O access ports
       CORE_IN:  out std_logic_vector(IOS-1 downto 0);
       CORE_EN:  in std_logic_vector(IOS-1 downto 0);
