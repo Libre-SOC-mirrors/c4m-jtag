@@ -74,6 +74,7 @@ begin
 
   -- Set IOMODE
   -- Currently SR_2Core or SR_Z are not used
+  -- TODO: Handle more IOMODEs
   IOMODE <= SR_2Pad when IR = CMD_EXTEST else
             SR_Through;
 
