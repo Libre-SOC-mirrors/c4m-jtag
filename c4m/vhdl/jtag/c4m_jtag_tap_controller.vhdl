@@ -100,7 +100,8 @@ begin
     generic map (
       IR_WIDTH => IR_WIDTH,
       PART_NUMBER => PART_NUMBER,
-      MANUFACTURER => MANUFACTURER
+      MANUFACTURER => MANUFACTURER,
+      VERSION => VERSION
     )
     port map (
       TCK => TCK,
