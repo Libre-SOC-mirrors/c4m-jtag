@@ -28,6 +28,11 @@ package c4m_jtag is
     SR_Shift    -- Shift the BD SR
   );
 
+  function c4m_jtag_cmd_idcode(width: integer) return std_logic_vector;
+  function c4m_jtag_cmd_bypass(width: integer) return std_logic_vector;
+  function c4m_jtag_cmd_samplepreload(width: integer) return std_logic_vector;
+  function c4m_jtag_cmd_extest(width: integer) return std_logic_vector;
+
   component c4m_jtag_tap_fsm is
     port (
       -- The TAP signals
@@ -187,11 +192,6 @@ package c4m_jtag is
       PAD_OUT:  out std_logic_vector(IOS-1 downto 0)
     );
   end component c4m_jtag_tap_controller;
-
-  function c4m_jtag_cmd_idcode(width: integer) return std_logic_vector;
-  function c4m_jtag_cmd_bypass(width: integer) return std_logic_vector;
-  function c4m_jtag_cmd_samplepreload(width: integer) return std_logic_vector;
-  function c4m_jtag_cmd_extest(width: integer) return std_logic_vector;
 end c4m_jtag;
 
 package body c4m_jtag is
