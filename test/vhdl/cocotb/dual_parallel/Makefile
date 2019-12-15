@@ -1,5 +1,5 @@
 CURDIR=$(realpath .)
-TOPDIR=$(realpath ../../..)
+TOPDIR=$(realpath ../../../..)
 
 ifeq ($(PYTHONPATH),)
   PYTHONPATH := $(TOPDIR)

@@ -1,5 +1,5 @@
 #!/bin/sh
-vhdldir=`realpath ../../../c4m/vhdl/jtag`
+vhdldir=`realpath ../../../../c4m/vhdl/jtag`
 opts=--std=08
 ghdl -a $opts $vhdldir/c4m_jtag_pkg.vhdl
 ghdl -a $opts $vhdldir/c4m_jtag_tap_fsm.vhdl
