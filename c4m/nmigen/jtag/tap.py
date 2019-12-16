@@ -174,13 +174,21 @@ class TAP(Elaboratable):
         assert((ir_width is None) or (isinstance(ir_width, int) and ir_width >= 2))
         assert(len(version) == 4)
 
-        self.name = name if name is not None else get_var_name(depth=src_loc_at+2, default="TAP")
+        if name is None:
+            name = get_var_name(depth=src_loc_at+2, default="TAP")
+        self.name = name
         self.bus = Interface(with_reset=with_reset, name=self.name+"_bus",
                              src_loc_at=src_loc_at+1)
 
         # TODO: Handle IOs with different directions
-        self.core = Array(Pin(1, "io") for _ in range(io_count)) # Signals to use for core
-        self.pad  = Array(Pin(1, "io") for _ in range(io_count)) # Signals going to IO pads
+        self.core = Array(
+            Pin(1, "io", name=name+"_coreio"+str(i), src_loc_at=src_loc_at+1)
+            for i in range(io_count)
+        ) # Signals to use for core
+        self.pad  = Array(
+            Pin(1, "io", name=name+"_padio"+str(i), src_loc_at=src_loc_at+1)
+            for i in range(io_count)
+        ) # Signals going to IO pads
 
         ##
 
