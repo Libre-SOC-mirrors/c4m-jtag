@@ -68,9 +68,9 @@ begin
   end generate;
   BDSRCONN: for i in 0 to IOS-2 generate
   begin
-    BDSR_IN(i) <= BDSR_OUT(i+1);
+    BDSR_IN(i+1) <= BDSR_OUT(i);
   end generate;
-  BDSR_IN(IOS-1) <= TDI;
+  BDSR_IN(0) <= TDI;
 
   -- Set IOMODE
   -- Currently SR_2Core or SR_Z are not used
@@ -85,7 +85,7 @@ begin
                 SR_Shift when ISSAMPLECMD and SHIFT = '1' else
                 SR_Normal;
 
-  TDO <= BDSR_OUT(BDSR_IN'high) when ISSAMPLECMD and SHIFT = '1' else
+  TDO <= BDSR_OUT(IOS-1) when ISSAMPLECMD and SHIFT = '1' else
          '0';
   TDO_EN <= '1' when ISSAMPLECMD and SHIFT = '1' else
             '0';
