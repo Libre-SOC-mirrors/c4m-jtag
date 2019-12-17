@@ -34,7 +34,7 @@ class JTAG_Master(object):
     """
     #TODO: Handle a JTAG chain with more than one device
 
-    def __init__(self, tck, tms, tdi, tdo, trst_n=None, clk_period=1000):
+    def __init__(self, tck, tms, tdi, tdo, trst_n=None, clk_period=1000, ir_width=2):
         self.tck = tck
         self.clkgen = JTAG_Clock(tck, clk_period)
         tck <= 0
@@ -49,11 +49,11 @@ class JTAG_Master(object):
         self.period = Timer(clk_period)
 
         # Standard commands
-        # TODO: make IR length configurable; now 2 is assumed
-        self.BYPASS = [1, 1]
-        self.IDCODE = [0, 1]
-        self.SAMPLEPRELOAD = [1, 0]
-        self.EXTEST = [0, 0]
+        # TODO: Make values configurable
+        self.BYPASS = [1 for _ in range(ir_width)]
+        self.IDCODE = [1 if i == ir_width-1 else 0 for i in range(ir_width)]
+        self.SAMPLEPRELOAD = [1 if i == ir_width-2 else 0 for i in range(ir_width)]
+        self.EXTEST = [0 for _ in range(ir_width)]
 
         # After command we always leave the controller in reset or runidle state
         # If value is None we will always reset the interface
@@ -118,7 +118,10 @@ class JTAG_Master(object):
 
     @cocotb.coroutine
     def load_ir(self, cmd):
-        cmd_copy = list(cmd)
+        if isinstance(cmd, BinaryValue):
+            cmd_copy = [int(c) for c in cmd.binstr]
+        else:
+            cmd_copy = list(cmd)
         result = BinaryValue(bits=len(cmd_copy))
         l_result = list()
 
