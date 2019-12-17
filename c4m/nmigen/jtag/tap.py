@@ -274,7 +274,7 @@ class TAP(Elaboratable):
         return m
 
 
-    def add_shiftreg(self, ircode, length, domain="sync", name=None, src_loc_at=0):
+    def add_shiftreg(self, *, ircode, length, domain="sync", name=None, src_loc_at=0):
         """Add a shift register to the JTAG interface
 
         Parameters:
