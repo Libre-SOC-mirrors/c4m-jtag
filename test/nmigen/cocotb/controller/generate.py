@@ -22,10 +22,16 @@ class Top(Elaboratable):
         self.tap = tap = TAP()
         self.ios = [tap.add_io(iotype=iotype) for iotype in self.iotypes]
 
+        self.sr = tap.add_shiftreg(ircode=3, length=3)
+
+        self.wb = tap.add_wishbone(ircodes=[4, 5, 6], address_width=16, data_width=8)
+
     def elaborate(self, platform):
         m = Module()
 
         m.submodules.tap = self.tap
+
+        m.d.comb += self.sr.i.eq(self.sr.o)
 
         return m
 
@@ -41,10 +47,6 @@ for conn in top.ios:
         except:
             pass
 
-# for io in tap.core:
-#     ports += [io.i, io.o, io.oe]
-# for io in tap.pad:
-#     ports += [io.i, io.o, io.oe]
 top_code = convert(top, ports=ports, platform=p)
 with open("code/top.v", "w") as f:
     f.write(top_code)
@@ -52,5 +54,3 @@ with open("code/top.v", "w") as f:
 for filename, code in p.extra_files.items():
     with open("code"+ os.path.sep + filename, "w") as f:
         f.write(code)
-
-    
