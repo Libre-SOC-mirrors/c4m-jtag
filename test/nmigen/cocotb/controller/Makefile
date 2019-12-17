@@ -77,4 +77,4 @@ $(TOPVCD): sim
 
 .PHONY: clean
 clean::
-	@rm -fr code $(TOPVCD)
+	@rm -fr code $(TOPVCD) __pycache__
