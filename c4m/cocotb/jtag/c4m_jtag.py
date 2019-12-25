@@ -122,7 +122,7 @@ class JTAG_Master(object):
             cmd_copy = [int(c) for c in cmd.binstr]
         else:
             cmd_copy = list(cmd)
-        result = BinaryValue(bits=len(cmd_copy))
+        result = BinaryValue(n_bits=len(cmd_copy))
         l_result = list()
 
         yield self.change_to_run()
@@ -149,7 +149,7 @@ class JTAG_Master(object):
         result will contain the 32 bit IDCODE of the device
         """
 
-        result = BinaryValue(bits=32)
+        result = BinaryValue(n_bits=32)
         l_result = list()
 
         # Keep tdi 0 for the whole run
