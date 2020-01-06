@@ -11,7 +11,7 @@ entity c4m_jtag_tap_controller is
     DEBUG:              boolean := false;
 
     IR_WIDTH:           integer := 2;
-    IOS:                integer := 1;
+    IOTYPES:            IOTYPE_VECTOR := IOTYPES_NULL;
 
     MANUFACTURER:       std_logic_vector(10 downto 0) := "10001111111";
     PART_NUMBER:        std_logic_vector(15 downto 0) := "0000000000000001";
@@ -35,18 +35,20 @@ entity c4m_jtag_tap_controller is
     UPDATE:     out std_logic;
 
     -- The I/O access ports
-    CORE_IN:    out std_logic_vector(IOS-1 downto 0);
-    CORE_EN:    in std_logic_vector(IOS-1 downto 0);
-    CORE_OUT:   in std_logic_vector(IOS-1 downto 0);
+    CORE_IN:    out std_logic_vector(IOTYPES'range);
+    CORE_EN:    in std_logic_vector(IOTYPES'range);
+    CORE_OUT:   in std_logic_vector(IOTYPES'range);
 
     -- The pad connections
-    PAD_IN:     in std_logic_vector(IOS-1 downto 0);
-    PAD_EN:     out std_logic_vector(IOS-1 downto 0);
-    PAD_OUT:    out std_logic_vector(IOS-1 downto 0)
+    PAD_IN:     in std_logic_vector(IOTYPES'range);
+    PAD_EN:     out std_logic_vector(IOTYPES'range);
+    PAD_OUT:    out std_logic_vector(IOTYPES'range)
   );
 end c4m_jtag_tap_controller;
 
 architecture rtl of c4m_jtag_tap_controller is
+  constant null_logic_vector: std_logic_vector(1 to 0) := (others => 'X');
+
   signal S_RESET:       std_logic;
   signal S_ISIR:        std_logic;
   signal S_ISDR:        std_logic;
@@ -117,29 +119,38 @@ begin
       SHIFT => S_SHIFT and S_ISDR,
       UPDATE => S_UPDATE and S_ISDR
     );
-  
-  -- The IOS
-  IOBLOCK: c4m_jtag_ioblock
-    generic map (
-      IR_WIDTH => IR_WIDTH,
-      IOS => IOS
-    )
-    port map (
-      TCK => TCK,
-      TDI => TDI,
-      TDO => IO_TDO,
-      TDO_EN => IO_TDO_EN,
-      IR => S_IR,
-      CAPTURE => S_CAPTURE and S_ISDR,
-      SHIFT => S_SHIFT and S_ISDR,
-      UPDATE => S_UPDATE and S_ISDR,
-      CORE_OUT => CORE_OUT,
-      CORE_IN => CORE_IN,
-      CORE_EN => CORE_EN,
-      PAD_OUT => PAD_OUT,
-      PAD_IN => PAD_IN,
-      PAD_EN => PAD_EN
-    );
+
+  -- The IOs
+  IOBLOCK_gen: if IOTYPES'length > 0 generate
+    IOBLOCK: c4m_jtag_ioblock
+      generic map (
+        IR_WIDTH => IR_WIDTH,
+        IOTYPES => IOTYPES
+      )
+      port map (
+        TCK => TCK,
+        TDI => TDI,
+        TDO => IO_TDO,
+        TDO_EN => IO_TDO_EN,
+        IR => S_IR,
+        CAPTURE => S_CAPTURE and S_ISDR,
+        SHIFT => S_SHIFT and S_ISDR,
+        UPDATE => S_UPDATE and S_ISDR,
+        CORE_OUT => CORE_OUT,
+        CORE_IN => CORE_IN,
+        CORE_EN => CORE_EN,
+        PAD_OUT => PAD_OUT,
+        PAD_IN => PAD_IN,
+        PAD_EN => PAD_EN
+      );
+  end generate IOBLOCK_gen;
+  NOIOBLOCK_gen: if IOTYPES'length = 0 generate
+    IO_TDO <= '0';
+    IO_TDO_EN <= '0';
+    CORE_IN <= null_logic_vector;
+    PAD_EN <= null_logic_vector;
+    PAD_OUT <= null_logic_vector;
+  end generate NOIOBLOCK_gen;
 
   TDO <= IR_TDO when IR_TDO_EN = '1' else
          ID_TDO when ID_TDO_EN = '1' else
@@ -155,5 +166,3 @@ begin
       severity ERROR;
   end generate CHECK_EN;
 end rtl;
-
-

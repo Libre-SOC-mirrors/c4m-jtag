@@ -7,6 +7,7 @@ package c4m_jtag is
     SR_Through, -- Connect core signal to pad signals
     SR_2Pad,    -- Connect BD to pad
     SR_2Core,   -- Connect BD to core
+    SR_2PadCore, -- Connect BD to pad and core
     SR_Z        -- pad is high impedance
   );
   type SRSAMPLEMODE_TYPE is (
@@ -15,11 +16,21 @@ package c4m_jtag is
     SR_Update,  -- Update BD from SR on falling edge of TCK
     SR_Shift    -- Shift the BD SR
   );
+  type IOTYPE_TYPE is (
+    IO_IN,      -- Input only
+    IO_OUT,     -- Output only, without tristate
+    IO_OUT3,    -- Output only, with tristate
+    IO_INOUT3   -- Input and output with tristate
+  );
+  type IOTYPE_VECTOR is array ( natural range <> ) of IOTYPE_TYPE;
+
+  constant IOTYPES_NULL: IOTYPE_VECTOR(1 to 0) := (others => IO_INOUT3);
 
   function c4m_jtag_cmd_idcode(width: integer) return std_logic_vector;
   function c4m_jtag_cmd_bypass(width: integer) return std_logic_vector;
   function c4m_jtag_cmd_samplepreload(width: integer) return std_logic_vector;
   function c4m_jtag_cmd_extest(width: integer) return std_logic_vector;
+  function gen_iotypes(count: integer; iotype: IOTYPE_TYPE := IO_INOUT3) return IOTYPE_VECTOR;
 
   component c4m_jtag_tap_fsm is
     port (
@@ -88,6 +99,9 @@ package c4m_jtag is
   end component c4m_jtag_idblock;
 
   component c4m_jtag_iocell is
+    generic (
+      IOTYPE:   IOTYPE_TYPE
+    );
     port (
       -- core connections
       CORE_IN:  out std_logic;
@@ -113,7 +127,7 @@ package c4m_jtag is
   component c4m_jtag_ioblock is
     generic (
       IR_WIDTH: integer := 2;
-      IOS:      integer := 1
+      IOTYPES:  IOTYPE_VECTOR
     );
     port (
       -- needed TAP signals
@@ -125,20 +139,20 @@ package c4m_jtag is
       -- The instruction
       IR:       in std_logic_vector(IR_WIDTH-1 downto 0);
 
-      -- What action to perform
+      -- actions
       CAPTURE:  in std_logic;
       SHIFT:    in std_logic;
       UPDATE:   in std_logic;
 
       -- The I/O access ports
-      CORE_OUT: in std_logic_vector(IOS-1 downto 0);
-      CORE_IN:  out std_logic_vector(IOS-1 downto 0);
-      CORE_EN:  in std_logic_vector(IOS-1 downto 0);
+      CORE_OUT: in std_logic_vector(IOTYPES'range);
+      CORE_IN:  out std_logic_vector(IOTYPES'range);
+      CORE_EN:  in std_logic_vector(IOTYPES'range);
 
       -- The pad connections
-      PAD_OUT:  out std_logic_vector(IOS-1 downto 0);
-      PAD_IN:   in std_logic_vector(IOS-1 downto 0);
-      PAD_EN:   out std_logic_vector(IOS-1 downto 0)
+      PAD_OUT:  out std_logic_vector(IOTYPES'range);
+      PAD_IN:   in std_logic_vector(IOTYPES'range);
+      PAD_EN:   out std_logic_vector(IOTYPES'range)
     );
   end component c4m_jtag_ioblock;
 
@@ -147,7 +161,7 @@ package c4m_jtag is
       DEBUG:            boolean := false;
 
       IR_WIDTH:         integer := 2;
-      IOS:              integer := 1;
+      IOTYPES:          IOTYPE_VECTOR := IOTYPES_NULL;
 
       -- The default MANUFACTURING ID is not representing a valid
       -- manufacturer according to the JTAG standard
@@ -171,15 +185,16 @@ package c4m_jtag is
       CAPTURE:  out std_logic; -- In DR_Capture state
       SHIFT:    out std_logic; -- In DR_Shift state
       UPDATE:   out std_logic; -- In DR_Update state
+
       -- The I/O access ports
-      CORE_IN:  out std_logic_vector(IOS-1 downto 0);
-      CORE_EN:  in std_logic_vector(IOS-1 downto 0);
-      CORE_OUT: in std_logic_vector(IOS-1 downto 0);
+      CORE_IN:  out std_logic_vector(IOTYPES'range);
+      CORE_EN:  in std_logic_vector(IOTYPES'range);
+      CORE_OUT: in std_logic_vector(IOTYPES'range);
 
       -- The pad connections
-      PAD_IN:   in std_logic_vector(IOS-1 downto 0);
-      PAD_EN:   out std_logic_vector(IOS-1 downto 0);
-      PAD_OUT:  out std_logic_vector(IOS-1 downto 0)
+      PAD_IN:   in std_logic_vector(IOTYPES'range);
+      PAD_EN:   out std_logic_vector(IOTYPES'range);
+      PAD_OUT:  out std_logic_vector(IOTYPES'range)
     );
   end component c4m_jtag_tap_controller;
 end c4m_jtag;
@@ -212,4 +227,11 @@ package body c4m_jtag is
     return_vector := (others => '0');
     return return_vector;
   end;
+
+  function gen_iotypes(count: integer; iotype: IOTYPE_TYPE := IO_INOUT3) return IOTYPE_VECTOR is
+    variable return_vector: IOTYPE_VECTOR(0 to count-1);
+  begin
+    return_vector := (others => iotype);
+    return return_vector;
+  end function gen_iotypes;
 end package body;

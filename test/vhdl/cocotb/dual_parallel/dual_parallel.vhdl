@@ -5,6 +5,17 @@ use ieee.std_logic_1164.ALL;
 
 use work.c4m_jtag.ALL;
 
+package dual_parallel_pkg is
+  constant IOTYPES:     IOTYPE_VECTOR(0 to 0) := (0 => IO_INOUT3);
+end package dual_parallel_pkg;
+
+
+library ieee;
+use ieee.std_logic_1164.ALL;
+
+use work.c4m_jtag.ALL;
+use work.dual_parallel_pkg.ALL;
+
 entity dual_parallel is
   port (
     -- Instance 1
@@ -36,6 +47,10 @@ architecture rtl of dual_parallel is
   signal I2_PAD_OUT:    std_logic;
 begin
   CTRL1: c4m_jtag_tap_controller
+    generic map (
+      DEBUG => true,
+      IOTYPES => IOTYPES
+    )
     port map (
       TCK => I1_TCK,
       TMS => I1_TMS,
@@ -56,6 +71,10 @@ begin
     );
 
   CTRL2: c4m_jtag_tap_controller
+    generic map (
+      DEBUG => true,
+      IOTYPES => IOTYPES
+    )
     port map (
       TCK => I2_TCK,
       TMS => I2_TMS,

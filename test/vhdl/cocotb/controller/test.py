@@ -63,31 +63,31 @@ def test03_sample(dut):
     dut._log.info("Load SAMPLEPRELOAD command")
     yield master.load_ir(master.SAMPLEPRELOAD)
 
-    data_in.binstr = "011"
+    data_in.binstr = "0101110"
     dut._log.info("  preloading data {}".format(data_in.binstr))
 
     # Set the ios pins
-    dut.core_out = 0
-    dut.core_en = 0
-    dut.pad_in = 1
+    dut.core_out = BinaryValue("X010")
+    dut.core_en = BinaryValue("XX01")
+    dut.pad_in = BinaryValue("1XX0")
     yield master.shift_data(data_in)
     dut._log.info("  output: {}".format(master.result.binstr))
-    assert(master.result.binstr == "100")
+    assert(master.result.binstr == "1010001")
 
 
     dut._log.info("Load EXTEST command")
     yield master.load_ir(master.EXTEST)
 
-    data_in.binstr = "100"
+    data_in.binstr = "1010001"
     dut._log.info("  input data {}".format(data_in.binstr))
     
     # Set the ios pins
-    dut.core_out = 1
-    dut.core_en = 1
-    dut.pad_in = 0
+    dut.core_out = BinaryValue("X101")
+    dut.core_en = BinaryValue("XX10")
+    dut.pad_in = BinaryValue("0XX1")
     yield master.shift_data(data_in)
     dut._log.info("  output: {}".format(master.result.binstr))
-    assert(master.result.binstr == "011")
+    assert(master.result.binstr == "0101110")
 
     dut._log.info("Do a capture of the last loaded data")
     yield master.shift_data([])

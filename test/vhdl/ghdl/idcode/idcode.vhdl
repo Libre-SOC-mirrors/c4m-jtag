@@ -16,6 +16,7 @@ architecture rtl of bench_idcode is
   signal TRST_N: std_logic;
 
   constant CLK_PERIOD:  time := 10 ns;
+  constant NULL_STDVECTOR: std_logic_vector(1 to 0) := (others => 'X');
 
   procedure ClkCycle(
     signal CLK: out std_logic;
@@ -54,11 +55,11 @@ begin
       SHIFT => open,
       UPDATE => open,
       IR => open,
-      CORE_OUT => "0",
+      CORE_OUT => NULL_STDVECTOR,
       CORE_IN => open,
-      CORE_EN => "0",
+      CORE_EN => NULL_STDVECTOR,
       PAD_OUT => open,
-      PAD_IN => "0",
+      PAD_IN => NULL_STDVECTOR,
       PAD_EN => open
     );
 
