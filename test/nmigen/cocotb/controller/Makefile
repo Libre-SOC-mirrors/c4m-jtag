@@ -18,14 +18,6 @@ TOPVCD := $(CURDIR)/$(TOPLEVEL).vcd
 # COCOTB
 #
 VHDL_SOURCES = \
-  $(CODEDIR)/jtag/c4m_jtag_pkg.vhdl \
-  $(CODEDIR)/jtag/c4m_jtag_tap_fsm.vhdl \
-  $(CODEDIR)/jtag/c4m_jtag_irblock.vhdl \
-  $(CODEDIR)/jtag/c4m_jtag_iocell.vhdl \
-  $(CODEDIR)/jtag/c4m_jtag_ioblock.vhdl \
-  $(CODEDIR)/jtag/c4m_jtag_idblock.vhdl \
-  $(CODEDIR)/jtag/c4m_jtag_tap_controller.vhdl \
-  $(CODEDIR)/jtag/jtag_controller_i0.vhdl \
 #VHDL_SOURCES end
 VERILOG_SOURCES = \
   $(TOPFILE) \
