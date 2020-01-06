@@ -1,7 +1,9 @@
-import c4m_jtag_svfgrammar
+from functools import singledispatch
+
 import cocotb
 from cocotb.binary import BinaryValue
-from functools import singledispatch
+
+from  .c4m_jtag_svfgrammar import *
 
 def decodescanspec(node):
     length = int(str(node[2]))
@@ -185,21 +187,21 @@ class SVF_Executor(object):
         # Due to bug in Grammar definition all possible classes have to have
         # a dispatch entry otherwise an error will be raised.
         self.execute = singledispatch(self.execute)
-        self.execute.register(c4m_jtag_svfgrammar.EmptyLine, self._execute_NOP)
-        self.execute.register(c4m_jtag_svfgrammar.Comment, self._execute_NOP)
-        self.execute.register(c4m_jtag_svfgrammar.EndDR, self._execute_EndDR)
-        self.execute.register(c4m_jtag_svfgrammar.EndIR, self._execute_EndIR)
-        self.execute.register(c4m_jtag_svfgrammar.Frequency, self._execute_Frequency)
-        self.execute.register(c4m_jtag_svfgrammar.HDR, self._execute_HDR)
-        self.execute.register(c4m_jtag_svfgrammar.HIR, self._execute_HIR)
-        self.execute.register(c4m_jtag_svfgrammar.Runtest, self._execute_Runtest)
-        self.execute.register(c4m_jtag_svfgrammar.SDR, self._execute_SDR)
-        self.execute.register(c4m_jtag_svfgrammar.SIR, self._execute_SIR)
-        self.execute.register(c4m_jtag_svfgrammar.State, self._execute_State)
-        self.execute.register(c4m_jtag_svfgrammar.TDR, self._execute_TDR)
-        self.execute.register(c4m_jtag_svfgrammar.TIR, self._execute_TIR)
-        self.execute.register(c4m_jtag_svfgrammar.Trst, self._execute_Trst)
-        self.execute.register(c4m_jtag_svfgrammar.SVFFile, self._execute_SVFFile)
+        self.execute.register(EmptyLine, self._execute_NOP)
+        self.execute.register(Comment, self._execute_NOP)
+        self.execute.register(EndDR, self._execute_EndDR)
+        self.execute.register(EndIR, self._execute_EndIR)
+        self.execute.register(Frequency, self._execute_Frequency)
+        self.execute.register(HDR, self._execute_HDR)
+        self.execute.register(HIR, self._execute_HIR)
+        self.execute.register(Runtest, self._execute_Runtest)
+        self.execute.register(SDR, self._execute_SDR)
+        self.execute.register(SIR, self._execute_SIR)
+        self.execute.register(State, self._execute_State)
+        self.execute.register(TDR, self._execute_TDR)
+        self.execute.register(TIR, self._execute_TIR)
+        self.execute.register(Trst, self._execute_Trst)
+        self.execute.register(SVFFile, self._execute_SVFFile)
 
         # Store the head and tail for the scan
         self._d_tdi = self._d_tdi_h = self._d_tdi_t = None
@@ -219,8 +221,8 @@ class SVF_Executor(object):
     @cocotb.coroutine
     def run(self, cmds, p=print):
         self._p = p
-        if isinstance(cmds, c4m_jtag_svfgrammar.SVFFile):
+        if isinstance(cmds, SVFFile):
             yield self.execute(cmds)
         else:
-            p = c4m_jtag_svfgrammar.SVFFile.parser()
+            p = SVFFile.parser()
             yield self.execute(p.parse_string(cmds))
