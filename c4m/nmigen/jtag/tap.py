@@ -161,6 +161,13 @@ class IOType(Enum):
 
 
 class IOConn(Record):
+    lengths = {
+        IOType.In: 1,
+        IOType.Out: 1,
+        IOType.TriOut: 2,
+        IOType.InTriOut: 3,
+    }
+
     """TAP subblock representing the interface for an JTAG IO cell.
     It contains signal to connect to the core and to the pad
 
@@ -535,13 +542,7 @@ class TAP(Elaboratable):
         return ioconn
 
     def _elaborate_ios(self, *, m, capture, shift, update, bd2io, bd2core):
-        connlength = {
-            IOType.In: 1,
-            IOType.Out: 1,
-            IOType.TriOut: 2,
-            IOType.InTriOut: 3,
-        }
-        length = sum(connlength[conn._iotype] for conn in self._ios)
+        length = sum(IOConn.lengths[conn._iotype] for conn in self._ios)
         if length == 0:
             return self.bus.tdi
 
@@ -550,30 +551,21 @@ class TAP(Elaboratable):
 
         # Boundary scan "capture" mode.  makes I/O status available via SR
         with m.If(capture):
+            iol = []
             idx = 0
             for conn in self._ios:
-                if conn._iotype == IOType.In:
-                    m.d.posjtag += io_sr[idx].eq(conn.pad.i)
-                    idx += 1
-                elif conn._iotype == IOType.Out:
-                    m.d.posjtag += io_sr[idx].eq(conn.core.o)
-                    idx += 1
-                elif conn._iotype == IOType.TriOut:
-                    m.d.posjtag += [
-                        io_sr[idx].eq(conn.core.o),
-                        io_sr[idx+1].eq(conn.core.oe),
-                    ]
-                    idx += 2
-                elif conn._iotype == IOType.InTriOut:
-                    m.d.posjtag += [
-                        io_sr[idx].eq(conn.pad.i),
-                        io_sr[idx+1].eq(conn.core.o),
-                        io_sr[idx+2].eq(conn.core.oe),
-                    ]
-                    idx += 3
-                else:
-                    raise("Internal error")
+                # in appropriate sequence: In/TriOut has pad.i,
+                # Out.InTriOut has everything, Out and TriOut have core.o
+                if conn._iotype in [IOType.In, IOType.InTriOut]:
+                    iol.append(conn.pad.i)
+                if conn._iotype in [IOType.Out, IOType.InTriOut]:
+                    iol.append(conn.core.o)
+                if conn._iotype in [IOType.TriOut, IOType.InTriOut]:
+                    iol.append(conn.core.oe)
+                # length double-check
+                idx += IOConn.lengths[conn._iotype] # fails if wrong type
             assert idx == length, "Internal error"
+            m.d.posjtag += io_sr.eq(Cat(*iol)) # assigns all io_sr in one hit
 
         # "Shift" mode (sends out captured data on tdo, sets incoming from tdi)
         with m.Elif(shift):
