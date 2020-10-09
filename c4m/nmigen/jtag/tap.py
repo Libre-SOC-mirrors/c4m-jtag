@@ -168,14 +168,16 @@ class IOConn(Record):
     core: subrecord with signals for the core
         i: Signal(1), present only for IOType.In and IOType.InTriOut.
             Signal input to core with pad input value.
-        o: Signal(1), present only for IOType.Out, IOType.TriOut and IOType.InTriOut.
+        o: Signal(1), present only for IOType.Out, IOType.TriOut and
+            IOType.InTriOut.
             Signal output from core with the pad output value.
         oe: Signal(1), present only for IOType.TriOut and IOType.InTriOut.
             Signal output from core with the pad output enable value.
     pad: subrecord with for the pad
         i: Signal(1), present only for IOType.In and IOType.InTriOut
             Output from pad with pad input value for core.
-        o: Signal(1), present only for IOType.Out, IOType.TriOut and IOType.InTriOut.
+        o: Signal(1), present only for IOType.Out, IOType.TriOut and
+            IOType.InTriOut.
             Input to pad with pad output value.
         oe: Signal(1), present only for IOType.TriOut and IOType.InTriOut.
             Input to pad with pad output enable value.
@@ -193,7 +195,8 @@ class IOConn(Record):
         return Layout((("core", sigs), ("pad", sigs)))
 
     def __init__(self, *, iotype, name=None, src_loc_at=0):
-        super().__init__(self.__class__.layout(iotype), name=name, src_loc_at=src_loc_at+1)
+        super().__init__(self.__class__.layout(iotype), name=name,
+                         src_loc_at=src_loc_at+1)
 
         self._iotype = iotype
 
@@ -203,7 +206,8 @@ class _IDBypassBlock(Elaboratable):
                  tdi, capture, shift, update, bypass,
                  name):
         self.name = name
-        if not isinstance(manufacturer_id, Const) and len(manufacturer_id) != 11:
+        if (not isinstance(manufacturer_id, Const) and
+            len(manufacturer_id) != 11):
             raise ValueError("manufacturer_id has to be Const of length 11")
         if not isinstance(part_number, Const) and len(manufacturer_id) != 16:
             raise ValueError("part_number has to be Const of length 16")
@@ -303,7 +307,8 @@ class TAP(Elaboratable):
         version=Const(0, 4),
         name=None, src_loc_at=0
     ):
-        assert((ir_width is None) or (isinstance(ir_width, int) and ir_width >= 2))
+        assert((ir_width is None) or (isinstance(ir_width, int) and
+               ir_width >= 2))
         assert(len(version) == 4)
 
         if name is None:
@@ -319,7 +324,7 @@ class TAP(Elaboratable):
         self._part_number = part_number
         self._version = version
 
-        self._ircodes = [0, 1, 2] # Already taken codes, all ones added at the end
+        self._ircodes = [0, 1, 2] # Already taken codes, all ones added at end
 
         self._ios = []
         self._srs = []
@@ -333,7 +338,8 @@ class TAP(Elaboratable):
         ir_max = max(self._ircodes) + 1 # One extra code needed with all ones
         ir_width = len("{:b}".format(ir_max))
         if self._ir_width is not None:
-            assert self._ir_width >= ir_width, "Specified JTAG IR width not big enough for allocated shiift registers"
+            assert self._ir_width >= ir_width, "Specified JTAG IR width " \
+                   "not big enough for allocated shiift registers"
             ir_width = self._ir_width
 
         # TODO: Make commands numbers configurable
@@ -360,7 +366,8 @@ class TAP(Elaboratable):
 
         select_id = fsm.isdr & ((ir == cmd_idcode) | (ir == cmd_bypass))
         m.submodules._idblock = idblock = _IDBypassBlock(
-            manufacturer_id=self._manufacturer_id, part_number=self._part_number,
+            manufacturer_id=self._manufacturer_id,
+            part_number=self._part_number,
             version=self._version, tdi=self.bus.tdi,
             capture=(select_id & fsm.capture),
             shift=(select_id & fsm.shift),
@@ -378,7 +385,8 @@ class TAP(Elaboratable):
         preload = (ir == cmd_preload)
         select_io = fsm.isdr & (sample | preload)
         m.d.comb += [
-            io_capture.eq(sample & fsm.capture), # Don't capture if not sample (like for PRELOAD)
+            io_capture.eq(sample & fsm.capture), # Don't capture if not sample
+                                                 # (like for PRELOAD)
             io_shift.eq(select_io & fsm.shift),
             io_update.eq(select_io & fsm.update),
             io_bd2io.eq(ir == cmd_extest),
@@ -493,12 +501,13 @@ class TAP(Elaboratable):
         return io_sr[-1]
 
 
-    def add_shiftreg(self, *, ircode, length, domain="sync", name=None, src_loc_at=0):
+    def add_shiftreg(self, *, ircode, length, domain="sync", name=None,
+                     src_loc_at=0):
         """Add a shift register to the JTAG interface
 
         Parameters:
-        - ircode: code(s) for the IR; int or sequence of ints. In the latter case this
-          shiftreg is shared between different IR codes.
+        - ircode: code(s) for the IR; int or sequence of ints. In the latter
+          case this shiftreg is shared between different IR codes.
         - length: the length of the shift register
         - domain: the domain on which the signal will be used"""
 
@@ -509,7 +518,8 @@ class TAP(Elaboratable):
             ir_it = ircodes = (ircode,)
         for _ircode in ir_it:
             if not isinstance(_ircode, int) or _ircode <= 0:
-                raise ValueError("IR code '{}' is not an int greater than 0".format(_ircode))
+                raise ValueError("IR code '{}' is not an int "
+                                 "greater than 0".format(_ircode))
             if _ircode in self._ircodes:
                 raise ValueError("IR code '{}' already taken".format(_ircode))
 
@@ -517,7 +527,8 @@ class TAP(Elaboratable):
 
         if name is None:
             name = "sr{}".format(len(self._srs))
-        sr = ShiftReg(sr_length=length, cmds=len(ircodes), name=name, src_loc_at=src_loc_at+1)
+        sr = ShiftReg(sr_length=length, cmds=len(ircodes), name=name,
+                      src_loc_at=src_loc_at+1)
         self._srs.append((ircodes, domain, sr))
 
         return sr
@@ -540,13 +551,15 @@ class TAP(Elaboratable):
                 sr_update.eq((isir != 0) & update),
             ]
 
-            # update signal is on the JTAG clockdomain, sr.oe is on `domain` clockdomain
-            # latch update in `domain` clockdomain and see when it has falling edge.
+            # update signal is on the JTAG clockdomain, sr.oe is on `domain`
+            # clockdomain latch update in `domain` clockdomain and see when
+            # it has falling edge.
             # At that edge put isir in sr.oe for one `domain` clockdomain
             update_core = Signal(name=sr.name+"_update_core")
             update_core_prev = Signal(name=sr.name+"_update_core_prev")
             m.d[domain] += [
-                update_core.eq(sr_update), # This is CDC from JTAG domain to given domain
+                update_core.eq(sr_update), # This is CDC from JTAG domain
+                                           # to given domain
                 update_core_prev.eq(update_core)
             ]
             with m.If(update_core_prev & ~update_core):
@@ -577,16 +590,18 @@ class TAP(Elaboratable):
             with m.Else():
                 m.d.comb += self.bus.tdo.eq(tdo_jtag)
         else:
-            # Always connect tdo_jtag to 
+            # Always connect tdo_jtag to
             m.d.comb += self.bus.tdo.eq(tdo_jtag)
 
 
-    def add_wishbone(self, *, ircodes, address_width, data_width, granularity=None, domain="sync",
+    def add_wishbone(self, *, ircodes, address_width, data_width,
+                     granularity=None, domain="sync",
                      name=None, src_loc_at=0):
         """Add a wishbone interface
 
-        In order to allow high JTAG clock speed, data will be cached. This means that if data is
-        output the value of the next address will be read automatically.
+        In order to allow high JTAG clock speed, data will be cached.
+        This means that if data is output the value of the next address
+        will be read automatically.
 
         Parameters:
         -----------
@@ -616,7 +631,8 @@ class TAP(Elaboratable):
         )
 
         wb = WishboneInterface(data_width=data_width, addr_width=address_width,
-                               granularity=granularity, features={"stall", "lock", "err", "rty"},
+                               granularity=granularity,
+                               features={"stall", "lock", "err", "rty"},
                                name=name, src_loc_at=src_loc_at+1)
 
         self._wbs.append((sr_addr, sr_data, wb, domain))
@@ -648,7 +664,8 @@ class TAP(Elaboratable):
                         m.next = "READACK"
                 with m.State("READACK"):
                     with m.If(wb.ack):
-                        # Store read data in sr_data.i and keep it there til next read
+                        # Store read data in sr_data.i
+                        # and keep it there til next read
                         m.d[domain] += sr_data.i.eq(wb.dat_r)
                         m.next = "IDLE"
                 with m.State("WRITEREAD"):
