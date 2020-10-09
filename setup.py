@@ -23,7 +23,9 @@ setup(
     license="multi",
     python_requires="~=3.6",
     setup_requires=["setuptools_scm"],
-    install_requires=["setuptools", "cocotb", "nmigen"],
+
+    # removing cocotb, causing unnecessary dependency and install problems
+    install_requires=["setuptools", "nmigen"],
     include_package_data=True,
     packages=find_packages(),
     project_urls={
