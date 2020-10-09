@@ -445,6 +445,7 @@ class TAP(Elaboratable):
         io_sr = Signal(length)
         io_bd = Signal(length)
 
+        # Boundary scan "capture" mode.  makes I/O status available via SR
         with m.If(capture):
             idx = 0
             for conn in self._ios:
@@ -470,11 +471,17 @@ class TAP(Elaboratable):
                 else:
                     raise("Internal error")
             assert idx == length, "Internal error"
+
+        # "Shift" mode (sends out captured data on tdo, sets incoming from tdi)
         with m.Elif(shift):
             m.d.posjtag += io_sr.eq(Cat(self.bus.tdi, io_sr[:-1]))
+
+        # "Update" mode
         with m.Elif(update):
             m.d.negjtag += io_bd.eq(io_sr)
 
+        # sets up IO (pad<->core) or in testing mode depending on requested
+        # mode, via Muxes controlled by bd2core and bd2io
         idx = 0
         for conn in self._ios:
             if conn._iotype == IOType.In:
