@@ -302,12 +302,11 @@ class ShiftReg(Record):
 
 class TAP(Elaboratable):
     #TODO: Document TAP
-    def __init__(
-        self, *, with_reset=False, ir_width=None,
-        manufacturer_id=Const(0b10001111111, 11), part_number=Const(1, 16),
-        version=Const(0, 4),
-        name=None, src_loc_at=0
-    ):
+    def __init__(self, *, with_reset=False, ir_width=None,
+                 manufacturer_id=Const(0b10001111111, 11),
+                 part_number=Const(1, 16),
+                 version=Const(0, 4),
+                 name=None, src_loc_at=0:
         assert((ir_width is None) or (isinstance(ir_width, int) and
                ir_width >= 2))
         assert(len(version) == 4)
