@@ -1,6 +1,20 @@
 from nmigen import *
 from nmigen.hdl.rec import Direction
 
+
+class DMIInterface(Record):
+    def __init__(self, name=None, addr_wid=4, data_wid=64):
+        layout = [
+           ('addr_i', addr_wid, Direction.FANIN),  # DMI register address
+           ('din',    data_wid, Direction.FANIN),  # DMI data write in (we=1)
+           ('dout',   data_wid, Direction.FANOUT), # DMI data read out (we=0)
+           ('req_i',  1,        Direction.FANIN),  # DMI request valid (stb)
+           ('we_i',   1,        Direction.FANIN),  # DMI write-enable
+           ('ack_o',  1,        Direction.FANOUT), # DMI ack request
+        ]
+        super().__init__(name=name, layout=layout)
+
+
 class Interface(Record):
     """JTAG Interface.
 
