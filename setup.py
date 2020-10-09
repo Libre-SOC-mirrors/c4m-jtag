@@ -26,6 +26,10 @@ setup(
 
     # removing cocotb, causing unnecessary dependency and install problems
     install_requires=["setuptools", "nmigen", "nmigen-soc", "modgrammar"],
+
+    # unit tests require cocotb: main operation does not
+    tests_require=['cocotb'],
+
     include_package_data=True,
     packages=find_packages(),
     project_urls={
