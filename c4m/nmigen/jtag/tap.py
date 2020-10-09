@@ -326,7 +326,6 @@ class TAP(Elaboratable):
         self._srs = []
         self._wbs = []
 
-
     def elaborate(self, platform):
         m = Module()
 
@@ -349,6 +348,7 @@ class TAP(Elaboratable):
         m.domains.posjtag = fsm.posjtag
         m.domains.negjtag = fsm.negjtag
 
+        # IR block
         select_ir = fsm.isir
         m.submodules._irblock = irblock = _IRBlock(
             ir_width=ir_width, cmd_idcode=cmd_idcode, tdi=self.bus.tdi,
@@ -359,6 +359,7 @@ class TAP(Elaboratable):
         )
         ir = irblock.ir
 
+        # ID block
         select_id = fsm.isdr & ((ir == cmd_idcode) | (ir == cmd_bypass))
         m.submodules._idblock = idblock = _IDBypassBlock(
             manufacturer_id=self._manufacturer_id, part_number=self._part_number,
@@ -370,6 +371,7 @@ class TAP(Elaboratable):
             name=self.name+"_id",
         )
 
+        # IO (Boundary scan) block
         io_capture = Signal()
         io_shift = Signal()
         io_update = Signal()
@@ -391,6 +393,7 @@ class TAP(Elaboratable):
             bd2io=io_bd2io, bd2core=io_bd2core,
         )
 
+        # chain tdo: select as appropriate, to go into into shiftregs
         tdo = Signal(name=self.name+"_tdo")
         with m.If(select_ir):
             m.d.comb += tdo.eq(irblock.tdo)
@@ -399,10 +402,13 @@ class TAP(Elaboratable):
         with m.Elif(select_io):
             m.d.comb += tdo.eq(io_tdo)
 
+        # shiftregs block
         self._elaborate_shiftregs(
             m, capture=fsm.capture, shift=fsm.shift, update=fsm.update,
             ir=irblock.ir, tdo_jtag=tdo
         )
+
+        # wishbone
         self._elaborate_wishbones(m)
 
         return m
