@@ -2,9 +2,8 @@
 import os, textwrap
 from enum import Enum, auto
 
-from nmigen import *
-from nmigen.build import *
-from nmigen.lib.io import *
+from nmigen import (Elaboratable, Signal, Module, ClockDomain, Cat, Record,
+                    Const, Mux)
 from nmigen.hdl.rec import Direction, Layout
 from nmigen.tracer import get_var_name
 
