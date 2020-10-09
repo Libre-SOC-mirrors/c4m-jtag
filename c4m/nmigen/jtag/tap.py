@@ -306,7 +306,7 @@ class TAP(Elaboratable):
                  manufacturer_id=Const(0b10001111111, 11),
                  part_number=Const(1, 16),
                  version=Const(0, 4),
-                 name=None, src_loc_at=0:
+                 name=None, src_loc_at=0):
         assert((ir_width is None) or (isinstance(ir_width, int) and
                ir_width >= 2))
         assert(len(version) == 4)
@@ -669,8 +669,11 @@ class TAP(Elaboratable):
                         m.d[domain] += wb.dat_w.eq(sr_data.o)
                         m.next = "WRITEREAD"
                 with m.State("READ"):
-                    with m.If(~wb.stall):
+                    if not hasattr(wb, "stall"):
                         m.next = "READACK"
+                    else:
+                        with m.If(~wb.stall):
+                            m.next = "READACK"
                 with m.State("READACK"):
                     with m.If(wb.ack):
                         # Store read data in sr_data.i
@@ -678,8 +681,11 @@ class TAP(Elaboratable):
                         m.d[domain] += sr_data.i.eq(wb.dat_r)
                         m.next = "IDLE"
                 with m.State("WRITEREAD"):
-                    with m.If(~wb.stall):
+                    if not hasattr(wb, "stall"):
                         m.next = "WRITEREADACK"
+                    else:
+                        with m.If(~wb.stall):
+                            m.next = "WRITEREADACK"
                 with m.State("WRITEREADACK"):
                     with m.If(wb.ack):
                         m.d[domain] += wb.adr.eq(wb.adr + 1)
