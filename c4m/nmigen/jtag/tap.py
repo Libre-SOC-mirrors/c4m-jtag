@@ -616,7 +616,7 @@ class TAP(Elaboratable):
 
 
     def add_wishbone(self, *, ircodes, address_width, data_width,
-                     granularity=None, domain="sync",
+                     granularity=None, domain="sync", features=None,
                      name=None, src_loc_at=0):
         """Add a wishbone interface
 
@@ -632,6 +632,7 @@ class TAP(Elaboratable):
           share a shift register of length data_width.
         address_width: width of the address
         data_width: width of the data
+        features: features required.  defaults to stall, lock, err, rty
 
         Returns:
         wb: nmigen_soc.wishbone.bus.Interface
@@ -640,6 +641,8 @@ class TAP(Elaboratable):
         if len(ircodes) != 3:
             raise ValueError("3 IR Codes have to be provided")
 
+        if features is None:
+            features={"stall", "lock", "err", "rty"}
         if name is None:
             name = "wb" + str(len(self._wbs))
         sr_addr = self.add_shiftreg(
@@ -652,8 +655,7 @@ class TAP(Elaboratable):
         )
 
         wb = WishboneInterface(data_width=data_width, addr_width=address_width,
-                               granularity=granularity,
-                               features={"stall", "lock", "err", "rty"},
+                               granularity=granularity, features=features,
                                name=name, src_loc_at=src_loc_at+1)
 
         self._wbs.append((sr_addr, sr_data, wb, domain))
