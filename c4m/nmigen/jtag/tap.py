@@ -399,8 +399,9 @@ class TAP(Elaboratable):
             m.d.comb += tdo.eq(irblock.tdo)
         with m.Elif(select_id):
             m.d.comb += tdo.eq(idblock.tdo)
-        with m.Elif(select_io):
-            m.d.comb += tdo.eq(io_tdo)
+        if io_tdo is not None:
+            with m.Elif(select_io):
+                m.d.comb += tdo.eq(io_tdo)
 
         # shiftregs block
         self._elaborate_shiftregs(
@@ -438,6 +439,8 @@ class TAP(Elaboratable):
             IOType.InTriOut: 3,
         }
         length = sum(connlength[conn._iotype] for conn in self._ios)
+        if length == 0:
+            return None
 
         io_sr = Signal(length)
         io_bd = Signal(length)
@@ -498,7 +501,6 @@ class TAP(Elaboratable):
         assert idx == length, "Internal error"
 
         return io_sr[-1]
-
 
     def add_shiftreg(self, *, ircode, length, domain="sync", name=None, src_loc_at=0):
         """Add a shift register to the JTAG interface
