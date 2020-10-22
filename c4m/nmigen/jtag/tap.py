@@ -538,6 +538,8 @@ class TAP(Elaboratable):
 
     def _elaborate_ios(self, *, m, capture, shift, update, bd2io, bd2core):
         length = sum(IOConn.lengths[conn._iotype] for conn in self._ios)
+        if length == 0:
+            return None
 
         io_sr = Signal(length)
         io_bd = Signal(length)
@@ -595,8 +597,7 @@ class TAP(Elaboratable):
                 raise("Internal error")
         assert idx == length, "Internal error"
 
-        if io_sr:
-            return io_sr[-1]
+        return io_sr[-1]
 
     def add_shiftreg(self, *, ircode, length, domain="sync", name=None,
                      src_loc_at=0):
