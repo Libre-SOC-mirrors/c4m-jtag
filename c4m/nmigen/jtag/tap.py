@@ -372,7 +372,11 @@ class TAP(Elaboratable):
         ir = irblock.ir
 
         # ID block
-        select_id = fsm.isdr & ((ir == cmd_idcode) | (ir == cmd_bypass))
+        select_id = Signal()
+        id_bypass = Signal()
+        m.d.comb += select_id.eq(fsm.isdr &
+                                 ((ir == cmd_idcode) | (ir == cmd_bypass)))
+        m.d.comb += id_bypass.eq(ir == cmd_bypass)
         m.submodules._idblock = idblock = _IDBypassBlock(
             manufacturer_id=self._manufacturer_id,
             part_number=self._part_number,
@@ -380,7 +384,7 @@ class TAP(Elaboratable):
             capture=(select_id & fsm.capture),
             shift=(select_id & fsm.shift),
             update=(select_id & fsm.update),
-            bypass=(ir == cmd_bypass),
+            bypass=id_bypass,
             name=self.name+"_id",
         )
 
