@@ -16,7 +16,7 @@ def scm_version():
 
 setup(
     name="c4m_jtag",
-    use_scm_version=scm_version(),
+    #use_scm_version=scm_version(), # fails with tag name ls180-23jan2020
     author="Staf Verhaegen",
     author_email="staf@fibraservi.eu",
     description="",
