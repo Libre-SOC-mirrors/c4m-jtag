@@ -108,7 +108,7 @@ class SVF_Executor(object):
         if tdo is not None:
             if self._d_mask is not None:
                 raise(JTAGException("MASK not supported for SDR"))
-            assert(self.result == tdo)
+            assert(self.master.result == tdo)
 
     @cocotb.coroutine
     def _execute_SIR(self, node):
@@ -139,7 +139,7 @@ class SVF_Executor(object):
         if tdo is not None:
             if self._i_mask is not None:
                 raise(JTAGException("MASK not supported for SIR"))
-            assert(self.result == tdo)
+            assert(self.master.result == tdo)
         
 
     @cocotb.coroutine
