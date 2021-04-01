@@ -108,7 +108,7 @@ class JTAG_Master(object):
         isreset = False
         if self.state is None:
             yield self.reset()
-        if self.state is "Reset":
+        if self.state == "Reset":
             isreset = True
             self.tms <= 0
             yield self.cycle_clock()
