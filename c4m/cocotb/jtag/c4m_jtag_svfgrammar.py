@@ -93,4 +93,4 @@ class Trst(Grammar):
 
 
 class SVFFile(Grammar):
-    grammar = ONE_OR_MORE(EmptyLine | Comment | Trst | EndDR | EndIR | SIR | SDR | Runtest | State)
+    grammar = ONE_OR_MORE(EmptyLine | Comment | Trst | EndDR | EndIR | SIR | SDR | Runtest | State | HDR | HIR | TDR | TIR )
