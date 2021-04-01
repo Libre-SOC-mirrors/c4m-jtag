@@ -19,7 +19,7 @@ class Float(Grammar):
     grammar = (Integer, (L("."), OPTIONAL(Integer)), OPTIONAL(L("E"), Integer))
 
 class Hexadecimal(Grammar):
-    grammar = (L("("), WORD("0-9A-F"), L(")"))
+    grammar = (L("("), WORD("0-9A-Fa-f"), L(")"))
     grammar_collapse = True
 
 class StableState(Grammar):
