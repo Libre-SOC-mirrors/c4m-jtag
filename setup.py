@@ -23,7 +23,7 @@ setup(
     license="multi",
     python_requires="~=3.6",
     setup_requires=["setuptools_scm"],
-    install_requires=["setuptools", "cocotb", "nmigen"],
+    install_requires=["setuptools", "cocotb", "nmigen", "nmigen-soc"],
     include_package_data=True,
     packages=find_packages(),
     project_urls={
