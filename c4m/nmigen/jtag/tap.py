@@ -797,8 +797,17 @@ class TAP(Elaboratable):
                         m.d[domain] += wb.adr.eq(wb.adr + 1)
                         m.next = "READ"
 
+                if hasattr(wb, "stall"):
+                    m.d.comb += wb.stb.eq(fsm.ongoing("READ") |
+                                          fsm.ongoing("WRITEREAD"))
+                else:
+                    # non-stall is single-cycle (litex), must assert stb
+                    # until ack is sent
+                    m.d.comb += wb.stb.eq(fsm.ongoing("READ") |
+                                          fsm.ongoing("WRITEREAD") |
+                                          fsm.ongoing("READACK") |
+                                          fsm.ongoing("WRITEREADACK"))
                 m.d.comb += [
                     wb.cyc.eq(~fsm.ongoing("IDLE")),
-                    wb.stb.eq(fsm.ongoing("READ") | fsm.ongoing("WRITEREAD")),
                     wb.we.eq(fsm.ongoing("WRITEREAD")),
                 ]
