@@ -789,6 +789,7 @@ class TAP(Elaboratable):
                 if hasattr(wb, "stall"):
                     m.d.comb += wb.stb.eq(fsm.ongoing("READ") |
                                           fsm.ongoing("WRITEREAD"))
+                    m.d.comb += wb.we.eq(fsm.ongoing("WRITEREAD"))
                 else:
                     # non-stall is single-cycle (litex), must assert stb
                     # until ack is sent
@@ -796,7 +797,6 @@ class TAP(Elaboratable):
                                           fsm.ongoing("WRITEREAD") |
                                           fsm.ongoing("READACK") |
                                           fsm.ongoing("WRITEREADACK"))
-                m.d.comb += [
-                    wb.cyc.eq(~fsm.ongoing("IDLE")),
-                    wb.we.eq(fsm.ongoing("WRITEREAD")),
-                ]
+                    m.d.comb += wb.we.eq(fsm.ongoing("WRITEREAD") |
+                                         fsm.ongoing("WRITEREADACK"))
+                m.d.comb += wb.cyc.eq(~fsm.ongoing("IDLE"))
