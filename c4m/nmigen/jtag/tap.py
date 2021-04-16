@@ -356,13 +356,13 @@ class TAP(Elaboratable):
         cmd_preload = 2
         cmd_bypass = 2**ir_width - 1 # All ones
 
-        m.submodules._fsm = fsm = _FSM(bus=self.bus)
+        m.submodules.fsm = fsm = _FSM(bus=self.bus)
         m.domains.posjtag = fsm.posjtag
         m.domains.negjtag = fsm.negjtag
 
         # IR block
         select_ir = fsm.isir
-        m.submodules._irblock = irblock = _IRBlock(
+        m.submodules.irblock = irblock = _IRBlock(
             ir_width=ir_width, cmd_idcode=cmd_idcode, tdi=self.bus.tdi,
             capture=(fsm.isir & fsm.capture),
             shift=(fsm.isir & fsm.shift),
@@ -377,7 +377,7 @@ class TAP(Elaboratable):
         m.d.comb += select_id.eq(fsm.isdr &
                                  ((ir == cmd_idcode) | (ir == cmd_bypass)))
         m.d.comb += id_bypass.eq(ir == cmd_bypass)
-        m.submodules._idblock = idblock = _IDBypassBlock(
+        m.submodules.idblock = idblock = _IDBypassBlock(
             manufacturer_id=self._manufacturer_id,
             part_number=self._part_number,
             version=self._version, tdi=self.bus.tdi,
