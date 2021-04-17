@@ -120,6 +120,7 @@ class _FSM(Elaboratable):
 
         return m
 
+
 class _IRBlock(Elaboratable):
     """TAP subblock for handling the IR shift register"""
     def __init__(self, *, ir_width, cmd_idcode,
@@ -152,11 +153,13 @@ class _IRBlock(Elaboratable):
 
         return m
 
+
 class IOType(Enum):
     In = auto()
     Out = auto()
     TriOut = auto()
     InTriOut = auto()
+
 
 class IOConn(Record):
     """TAP subblock representing the interface for an JTAG IO cell.
@@ -198,6 +201,7 @@ class IOConn(Record):
         super().__init__(self.__class__.layout(iotype), name=name, src_loc_at=src_loc_at+1)
 
         self._iotype = iotype
+
 
 class _IDBypassBlock(Elaboratable):
     """TAP subblock for the ID shift register"""
