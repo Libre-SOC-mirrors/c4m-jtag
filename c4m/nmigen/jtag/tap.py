@@ -505,6 +505,7 @@ class TAP(Elaboratable):
                 with m.State("READACK"):
                     with m.If(dmi.ack_o):
                         # Store read data in sr_data.i hold till next read
+                        # Note: could use FFSynchroniser
                         cd += sr_data.i.eq(dmi.dout)
                         m.next = "IDLE"
 
@@ -657,6 +658,7 @@ class TAP(Elaboratable):
             # clockdomain latch update in `domain` clockdomain and see when
             # it has falling edge.
             # At that edge put isir in sr.oe for one `domain` clockdomain
+            # Note: could use FFSynchroniser instead
             update_core = Signal(name=sr.name+"_update_core")
             update_core_prev = Signal(name=sr.name+"_update_core_prev")
             m.d[domain] += [
@@ -673,6 +675,7 @@ class TAP(Elaboratable):
             with m.If(sr_shift):
                 m.d.posjtag += reg.eq(Cat(reg[1:], self.bus.tdi))
             with m.If(sr_capture):
+                # could also use FFSynchroniser here too
                 m.d.posjtag += reg.eq(sr.i)
 
             # tdo = reg[0], tdo_en = shift
@@ -771,8 +774,8 @@ class TAP(Elaboratable):
                             m.next = "READACK"
                 with m.State("READACK"):
                     with m.If(wb.ack):
-                        # Store read data in sr_data.i
-                        # and keep it there til next read
+                        # Store read data in sr_data.i and keep it there
+                        # til next read. could use FFSynchroniser (see above)
                         m.d[domain] += sr_data.i.eq(wb.dat_r)
                         m.next = "IDLE"
                 with m.State("WRITEREAD"):
