@@ -563,6 +563,8 @@ class TAP(Elaboratable):
             # update signal is on the JTAG clockdomain, sr.oe is on `domain` clockdomain
             # latch update in `domain` clockdomain and see when it has falling edge.
             # At that edge put isir in sr.oe for one `domain` clockdomain
+            # Using this custom sync <> JTAG domain synchronization avoids the use of
+            # more generic but also higher latency CDC solutions like FFSynchronizer.
             update_core = Signal(name=sr.name+"_update_core")
             update_core_prev = Signal(name=sr.name+"_update_core_prev")
             m.d[domain] += [
@@ -669,6 +671,8 @@ class TAP(Elaboratable):
                 with m.State("READACK"):
                     with m.If(wb.ack):
                         # Store read data in sr_data.i and keep it there til next read
+                        # This is enough to synchronize between sync and JTAG clock domain
+                        # and no higher latency solutions like FFSynchronizer is needed.
                         m.d[domain] += sr_data.i.eq(wb.dat_r)
                         m.next = "IDLE"
                 with m.State("WRITEREAD"):
