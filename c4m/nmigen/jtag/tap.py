@@ -119,6 +119,7 @@ class _FSM(Elaboratable):
 
         return m
 
+
 class _IRBlock(Elaboratable):
     """TAP subblock for handling the IR shift register"""
     def __init__(self, *, ir_width, cmd_idcode,
@@ -151,11 +152,13 @@ class _IRBlock(Elaboratable):
 
         return m
 
+
 class IOType(Enum):
     In = auto()
     Out = auto()
     TriOut = auto()
     InTriOut = auto()
+
 
 class IOConn(Record):
     lengths = {
@@ -207,6 +210,7 @@ class IOConn(Record):
                          src_loc_at=src_loc_at+1)
 
         self._iotype = iotype
+
 
 class _IDBypassBlock(Elaboratable):
     """TAP subblock for the ID shift register"""
@@ -305,6 +309,7 @@ class ShiftReg(Record):
             ("oe", cmds, Direction.FANOUT),
         ]
         super().__init__(layout, name=name, src_loc_at=src_loc_at+1)
+
 
 class TAP(Elaboratable):
     #TODO: Document TAP
