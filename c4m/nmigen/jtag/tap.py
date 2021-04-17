@@ -26,6 +26,7 @@ class _FSM(Elaboratable):
         self.shift = Signal()
         self.update = Signal()
 
+        # JTAG uses both edges of the incoming clock (TCK). set them up here
         self.posjtag = ClockDomain("posjtag", local=True)
         self.negjtag = ClockDomain("negjtag", local=True, clk_edge="neg")
 
