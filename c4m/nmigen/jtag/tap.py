@@ -422,9 +422,8 @@ class TAP(Elaboratable):
             m.d.comb += tdo.eq(irblock.tdo)
         with m.Elif(select_id):
             m.d.comb += tdo.eq(idblock.tdo)
-        if io_tdo is not None:
-            with m.Elif(select_io):
-                m.d.comb += tdo.eq(io_tdo)
+        with m.Elif(select_io):
+            m.d.comb += tdo.eq(io_tdo)
 
         # shiftregs block
         self._elaborate_shiftregs(
@@ -550,7 +549,7 @@ class TAP(Elaboratable):
     def _elaborate_ios(self, *, m, capture, shift, update, bd2io, bd2core):
         length = sum(IOConn.lengths[conn._iotype] for conn in self._ios)
         if length == 0:
-            return None
+            return self.bus.tdi
 
         io_sr = Signal(length)
         io_bd = Signal(length)
