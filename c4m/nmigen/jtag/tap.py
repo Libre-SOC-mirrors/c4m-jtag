@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 import os, textwrap
 from enum import Enum, auto
 
