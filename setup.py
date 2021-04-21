@@ -25,7 +25,7 @@ setup(
     setup_requires=["setuptools_scm"],
 
     # removing cocotb, causing unnecessary dependency and install problems
-    install_requires=["setuptools", "nmigen", "modgrammar"],
+    install_requires=["setuptools", "nmigen", "nmigen-soc", "modgrammar"],
 
     # unit tests require cocotb: main operation does not
     tests_require=['cocotb'],
