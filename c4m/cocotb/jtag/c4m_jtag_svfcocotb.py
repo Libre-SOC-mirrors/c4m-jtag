@@ -5,6 +5,7 @@ from cocotb.binary import BinaryValue
 
 from  .c4m_jtag_svfgrammar import *
 
+
 def decodescanspec(node):
     length = int(str(node[2]))
     fstr = "{:0"+str(node[2])+"b}"

@@ -5,6 +5,7 @@ from nmigen.build import Platform
 
 from c4m.nmigen.jtag import TAP
 
+
 class DummyPlatform(Platform):
     resources = []
     connectors = []
@@ -12,6 +13,7 @@ class DummyPlatform(Platform):
 
     def toolchain_prepare(self, fragment, name, **kwargs):
         raise NotImplementedError
+
 
 tap = TAP(ir_width=2)
 f = open("top.v", "w")

@@ -2,8 +2,10 @@ import cocotb
 from cocotb.triggers import Timer
 from cocotb.binary import BinaryValue
 
+
 class JTAGException(Exception):
     pass
+
 
 class JTAG_Clock(object):
     """
@@ -27,6 +29,7 @@ class JTAG_Clock(object):
             yield self.t
             self.signal <= 0
             yield self.t
+
 
 class JTAG_Master(object):
     """
