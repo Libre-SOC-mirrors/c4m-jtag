@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+#!/bin/env python3
+# Copyright (C) 2019,2020,2021 Staf Verhaegen <staf@fibraservi.eu>
+# Copyright (C) 2021,2022 Luke Kenneth Casson Leighton <lkcl@lkcl.net>
+# Funded by NLnet and NGI POINTER under EU Grants 871528 and 957073
+
 import os, textwrap
 from enum import Enum, auto
 
@@ -169,7 +174,7 @@ class IOConn(Record):
     }
 
     """TAP subblock representing the interface for an JTAG IO cell.
-    It contains signal to connect to the core and to the pad
+    It contains signals to connect to the core and to the pad
 
     This object is normally only allocated and returned from ``TAP.add_io``
     It is a Record subclass.
@@ -193,9 +198,7 @@ class IOConn(Record):
         oe: Signal(1), present only for IOType.TriOut and IOType.InTriOut.
             Input to pad with pad output enable value.
 
-    bank select, pullup and pulldown may also be optionally added to
-    both core and pad
-
+    bank select, pullup and pulldown may also be optionally added
     """
     @staticmethod
     def layout(iotype, banksel=0, pullup=False, pulldown=False):
@@ -215,8 +218,9 @@ class IOConn(Record):
 
         return Layout((("core", sigs), ("pad", sigs)))
 
-    def __init__(self, *, iotype, name=None, src_loc_at=0,
-                                  banksel=0, pullup=False, pulldown=False):
+    def __init__(self, *, iotype, name=None, banksel=0,
+                                  pullup=False, pulldown=False,
+                                  src_loc_at=0):
         layout = self.__class__.layout(iotype, banksel, pullup, pulldown)
         super().__init__(layout, name=name, src_loc_at=src_loc_at+1)
 
@@ -564,6 +568,19 @@ class TAP(Elaboratable):
 
     def _elaborate_ios(self, *, m, capture, shift, update, bd2io, bd2core):
         length = sum(IOConn.lengths[conn._iotype] for conn in self._ios)
+        # note: the starting points where each IOConn is placed into
+        # the Shift Register depends *specifically* on the type (parameters)
+        # of each IOConn, and therefore on all IOConn(s) that came before it
+        # [prior calls to add_io].  this function consistently follows
+        # the exact same pattern in the exact same sequence every time,
+        # to compute consistent offsets. developers must do the same:
+        # note that each length depends on *all* parameters:
+        # IOtype, banksel, pullup *and* pulldown.
+
+        # pre-compute the length of the IO shift registers needed.
+        # relies on Record.len() returning the total bit-width including
+        # all Signals
+        length = sum(len(conn) for conn in self._ios)
         if length == 0:
             return self.bus.tdi
 
@@ -583,9 +600,19 @@ class TAP(Elaboratable):
                     iol.append(conn.core.o)
                 if conn._iotype in [IOType.TriOut, IOType.InTriOut]:
                     iol.append(conn.core.oe)
-                # length double-check
+                # now also banksel, pullup and pulldown from core are added
+                if conn._banksel != 0:
+                    iol.append(conn.core.sel)
+                    idx += 1
+                if conn._pullup:
+                    iol.append(conn.core.pu)
+                    idx += 1
+                if conn._pulldown:
+                    iol.append(conn.core.pd)
+                    idx += 1
+                # help with length double-check
                 idx += IOConn.lengths[conn._iotype] # fails if wrong type
-            assert idx == length, "Internal error"
+            assert idx == length, "Internal error, length mismatch"
             m.d.posjtag += io_sr.eq(Cat(*iol)) # assigns all io_sr in one hit
 
         # "Shift" mode (sends out captured data on tdo, sets incoming from tdi)
@@ -598,8 +625,13 @@ class TAP(Elaboratable):
 
         # sets up IO (pad<->core) or in testing mode depending on requested
         # mode, via Muxes controlled by bd2core and bd2io
+        # for each IOConn, the number of bits needed from io_bd will vary
+        # and is computed on-the-fly, here. it is up to the developer to
+        # keep track of where each IO pad configuration starts and ends
+        # in the Shift Register (TODO: provide a dictionary of starting points)
         idx = 0
         for conn in self._ios:
+            # mux the I/O/OE depending on IOType
             if conn._iotype == IOType.In:
                 m.d.comb += conn.core.i.eq(Mux(bd2core, io_bd[idx], conn.pad.i))
                 idx += 1
@@ -621,8 +653,22 @@ class TAP(Elaboratable):
                 idx += 3
             else:
                 raise("Internal error")
+            # optional mux of banksel, pullup and pulldown.  note that idx
+            # advances each time, so that io_bd[idx] comes from the right point
+            comb = m.d.comb
+            if conn._banksel != 0:
+                s, e = (idx, idx+conn._banksel) # banksel can be multi-bit
+                comb += conn.pad.sel.eq(Mux(bd2io, io_bd[s:e], conn.core.sel))
+                idx = e
+            if conn._pullup:
+                comb += conn.pad.pu.eq(Mux(bd2io, io_bd[idx], conn.core.pu))
+                idx += 1
+            if conn._pulldown:
+                comb += conn.pad.pd.eq(Mux(bd2io, io_bd[idx], conn.core.pd))
+                idx += 1
         assert idx == length, "Internal error"
 
+        # return the last bit of the shift register, for output on tdo
         return io_sr[-1]
 
     def add_shiftreg(self, *, ircode, length, domain="sync", name=None,
