@@ -547,8 +547,9 @@ class TAP(Elaboratable):
                     dmi.we_i.eq(ds.ongoing("WRRD")),
                 ]
 
-    def add_io(self, *, iotype, name=None, src_loc_at=0,
-                                banksel=0, pullup=False, pulldown=False):
+    def add_io(self, *, iotype, name=None, banksel=0,
+                                pullup=False, pulldown=False,
+                                src_loc_at=0):
         """Add a io cell to the boundary scan chain
 
         Parameters:
@@ -749,7 +750,6 @@ class TAP(Elaboratable):
             # tdo = reg[0], tdo_en = shift
             tdos.append((reg[0], sr_shift))
 
-
         # Assign the right tdo to the bus tdo
         for i, (tdo, tdo_en) in enumerate(tdos):
             if i == 0:
@@ -765,7 +765,6 @@ class TAP(Elaboratable):
         else:
             # Always connect tdo_jtag to
             m.d.comb += self.bus.tdo.eq(tdo_jtag)
-
 
     def add_wishbone(self, *, ircodes, address_width, data_width,
                      granularity=None, domain="sync", features=None,
