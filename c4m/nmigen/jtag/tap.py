@@ -543,7 +543,8 @@ class TAP(Elaboratable):
                     dmi.we_i.eq(ds.ongoing("WRRD")),
                 ]
 
-    def add_io(self, *, iotype, name=None, src_loc_at=0):
+    def add_io(self, *, iotype, name=None, src_loc_at=0,
+                                banksel=0, pullup=False, pulldown=False):
         """Add a io cell to the boundary scan chain
 
         Parameters:
@@ -555,7 +556,9 @@ class TAP(Elaboratable):
         if name is None:
             name = "ioconn" + str(len(self._ios))
 
-        ioconn = IOConn(iotype=iotype, name=name, src_loc_at=src_loc_at+1)
+        ioconn = IOConn(iotype=iotype, banksel=banksel,
+                        pullup=pullup, pulldown=pulldown,
+                        name=name, src_loc_at=src_loc_at+1)
         self._ios.append(ioconn)
         return ioconn
 
