@@ -192,9 +192,13 @@ class IOConn(Record):
             Input to pad with pad output value.
         oe: Signal(1), present only for IOType.TriOut and IOType.InTriOut.
             Input to pad with pad output enable value.
+
+    bank select, pullup and pulldown may also be optionally added to
+    both core and pad
+
     """
     @staticmethod
-    def layout(iotype):
+    def layout(iotype, banksel=0, pullup=False, pulldown=False):
         sigs = []
         if iotype in (IOType.In, IOType.InTriOut):
             sigs.append(("i", 1))
@@ -202,14 +206,24 @@ class IOConn(Record):
             sigs.append(("o", 1))
         if iotype in (IOType.TriOut, IOType.InTriOut):
             sigs.append(("oe", 1))
+        if banksel > 0:
+            sigs.append(("sel", banksel))
+        if pullup:
+            sigs.append(("pu", 1))
+        if pulldown:
+            sigs.append(("pd", 1))
 
         return Layout((("core", sigs), ("pad", sigs)))
 
-    def __init__(self, *, iotype, name=None, src_loc_at=0):
-        super().__init__(self.__class__.layout(iotype), name=name,
-                         src_loc_at=src_loc_at+1)
+    def __init__(self, *, iotype, name=None, src_loc_at=0,
+                                  banksel=0, pullup=False, pulldown=False):
+        layout = self.__class__.layout(iotype, banksel, pullup, pulldown)
+        super().__init__(layout, name=name, src_loc_at=src_loc_at+1)
 
         self._iotype = iotype
+        self._banksel = banksel
+        self._pullup = pullup
+        self._pulldown = pulldown
 
 
 class _IDBypassBlock(Elaboratable):
