@@ -568,7 +568,6 @@ class TAP(Elaboratable):
         return ioconn
 
     def _elaborate_ios(self, *, m, capture, shift, update, bd2io, bd2core):
-        length = sum(IOConn.lengths[conn._iotype] for conn in self._ios)
         # note: the starting points where each IOConn is placed into
         # the Shift Register depends *specifically* on the type (parameters)
         # of each IOConn, and therefore on all IOConn(s) that came before it
@@ -579,9 +578,13 @@ class TAP(Elaboratable):
         # IOtype, banksel, pullup *and* pulldown.
 
         # pre-compute the length of the IO shift registers needed.
-        # relies on Record.len() returning the total bit-width including
-        # all Signals
-        length = sum(len(conn) for conn in self._ios)
+        length = 0
+        for conn in self._ios:
+            length += IOConn.lengths[conn._iotype] + conn._banksel
+            if conn._pullup:
+                length += 1
+            if conn._pulldown:
+                length += 1
         if length == 0:
             return self.bus.tdi
 
@@ -604,7 +607,7 @@ class TAP(Elaboratable):
                 # now also banksel, pullup and pulldown from core are added
                 if conn._banksel != 0:
                     iol.append(conn.core.sel)
-                    idx += 1
+                    idx += conn._banksel
                 if conn._pullup:
                     iol.append(conn.core.pu)
                     idx += 1
